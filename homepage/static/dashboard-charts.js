@@ -251,7 +251,7 @@
             var x = e.clientX - rect.left;
             var y = e.clientY - rect.top;
             var width = rect.width; // Use CSS width
-            var labelWidth = Math.min(180, width * 0.25);
+            var labelWidth = Math.min(220, width * 0.35); // Matches renderHeatmap exactly
             var cellWidth = (width - labelWidth - 10) / 24;
             var headerHeight = weather ? 48 : 30;
             var cellHeight = 32;
@@ -282,7 +282,7 @@
             }
             imgPreview.style.display = 'none';
 
-            if (hour >= 0 && hour < 24 && row >= 0 && row < speciesNames.length) {
+            if (x >= labelWidth && hour >= 0 && hour < 24 && row >= 0 && row < speciesNames.length) {
                 var name = speciesNames[row];
                 var val = (hourly[name] && hourly[name][hour]) ? hourly[name][hour] : 0;
                 var weatherStr = "";
