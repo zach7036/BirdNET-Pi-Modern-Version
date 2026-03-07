@@ -421,7 +421,6 @@ if(isset($_GET['view'])){
   if($_GET['view'] == "Species"){include('scripts/species.php');}
   if($_GET['view'] == "Daily Charts"){include('history.php');}
   if($_GET['view'] == "Tools"){
-    ensure_authenticated();
     $url = $_SERVER['SERVER_NAME']."/scripts/adminer.php";
     echo "<style>
             .tools-grid { display: flex; flex-wrap: wrap; gap: 24px; justify-content: center; max-width: 900px; margin: 20px auto; }
