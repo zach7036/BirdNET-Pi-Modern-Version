@@ -518,7 +518,13 @@ $db->close();
                 <?php endif; ?>
             </div>
             <?php if(count($dawn_chorus) > 10): ?>
-            <button class="show-list-btn" onclick="showAllItems(this)">Show all <?php echo count($dawn_chorus); ?> species ↓</button>
+            <button class="show-list-btn" 
+                    onclick="toggleItems(this)" 
+                    data-expanded="false" 
+                    data-show-text="Show all <?php echo count($dawn_chorus); ?> species ↓" 
+                    data-hide-text="Show top 10 species ↑">
+                Show all <?php echo count($dawn_chorus); ?> species ↓
+            </button>
             <?php endif; ?>
         </section>
 
@@ -544,7 +550,13 @@ $db->close();
                 <?php endif; ?>
             </div>
             <?php if(count($nocturnal) > 10): ?>
-            <button class="show-list-btn" onclick="showAllItems(this)">Show all <?php echo count($nocturnal); ?> species ↓</button>
+            <button class="show-list-btn" 
+                    onclick="toggleItems(this)" 
+                    data-expanded="false" 
+                    data-show-text="Show all <?php echo count($nocturnal); ?> species ↓" 
+                    data-hide-text="Show top 10 species ↑">
+                Show all <?php echo count($nocturnal); ?> species ↓
+            </button>
             <?php endif; ?>
         </section>
     </div>
@@ -571,7 +583,13 @@ $db->close();
             <?php endif; ?>
         </div>
         <?php if(count($activity_windows) > 10): ?>
-        <button class="show-list-btn" onclick="showAllItems(this)">Show all <?php echo count($activity_windows); ?> species ↓</button>
+        <button class="show-list-btn" 
+                onclick="toggleItems(this)" 
+                data-expanded="false" 
+                data-show-text="Show all <?php echo count($activity_windows); ?> species ↓" 
+                data-hide-text="Show top 10 species ↑">
+            Show all <?php echo count($activity_windows); ?> species ↓
+        </button>
         <?php endif; ?>
     </section>
     <?php endif; ?>
@@ -603,7 +621,13 @@ $db->close();
                 <?php endif; ?>
             </div>
             <?php if(count($new_arrivals) > 10): ?>
-            <button class="show-list-btn" onclick="showAllItems(this)">Show all <?php echo count($new_arrivals); ?> new arrivals ↓</button>
+            <button class="show-list-btn" 
+                    onclick="toggleItems(this)" 
+                    data-expanded="false" 
+                    data-show-text="Show all <?php echo count($new_arrivals); ?> new arrivals ↓" 
+                    data-hide-text="Show top 10 ↑">
+                Show all <?php echo count($new_arrivals); ?> new arrivals ↓
+            </button>
             <?php endif; ?>
         </section>
 
@@ -1005,11 +1029,24 @@ $db->close();
 <script src="static/Chart.bundle.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    window.showAllItems = function(btn) {
+    window.toggleItems = function(btn) {
         const section = btn.closest('.insights-section');
-        const hiddenLines = section.querySelectorAll('.hidden-item');
-        hiddenLines.forEach(el => el.classList.remove('hidden-item'));
-        btn.style.display = 'none';
+        const hiddenItems = section.querySelectorAll('.insights-stats-item');
+        const isExpanded = btn.getAttribute('data-expanded') === 'true';
+        
+        if (isExpanded) {
+            // Collapse: hide items > 10
+            hiddenItems.forEach((el, index) => {
+                if (index >= 10) el.classList.add('hidden-item');
+            });
+            btn.innerHTML = btn.getAttribute('data-show-text');
+            btn.setAttribute('data-expanded', 'false');
+        } else {
+            // Expand: show everything
+            hiddenItems.forEach(el => el.classList.remove('hidden-item'));
+            btn.innerHTML = btn.getAttribute('data-hide-text');
+            btn.setAttribute('data-expanded', 'true');
+        }
     };
 
     <?php if ($subview == 'behavior'): ?>
