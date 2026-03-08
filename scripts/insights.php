@@ -5,7 +5,9 @@ error_reporting(E_ALL);
 require_once 'scripts/common.php';
 
 $db = new SQLite3('./scripts/birds.db', SQLITE3_OPEN_READONLY);
-$db->busyTimeout(1000);
+$db->busyTimeout(5000);
+$db->exec('PRAGMA journal_mode = WAL');
+$db->exec('PRAGMA cache_size = -2000');
 
 // 1. Lifetime Species
 $lifetime_species = $db->querySingle('SELECT COUNT(DISTINCT(Sci_Name)) FROM detections') ?: 0;
@@ -415,9 +417,9 @@ $temp_trend_dets = json_encode(array_map(function($r) { return $r['det_count']; 
 $cooccur_pairs = [];
 $slot_res = $db->query("
     SELECT Date || '-' || CAST(substr(Time, 1, 2) AS INTEGER) as slot,
-           GROUP_CONCAT(DISTINCT Com_Name) as species_list,
-           GROUP_CONCAT(DISTINCT Sci_Name) as sci_list
+           GROUP_CONCAT(DISTINCT Com_Name) as species_list
     FROM detections
+    WHERE Date >= '$one_month_ago'
     GROUP BY slot
     HAVING COUNT(DISTINCT Sci_Name) > 1
 ");
@@ -425,8 +427,8 @@ $pair_counts = [];
 if ($slot_res) {
     while($row = $slot_res->fetchArray(SQLITE3_ASSOC)) {
         $names = explode(',', $row['species_list']);
-        $scis = explode(',', $row['sci_list']);
         $n = count($names);
+        if ($n > 10) $n = 10; // cap to avoid combinatorial explosion
         for ($i = 0; $i < $n; $i++) {
             for ($j = $i + 1; $j < $n; $j++) {
                 $key = ($names[$i] < $names[$j]) ? $names[$i] . '|' . $names[$j] : $names[$j] . '|' . $names[$i];
@@ -467,6 +469,7 @@ if ($has_raptors) {
                COUNT(*) as total,
                SUM(CASE WHEN $raptor_condition THEN 1 ELSE 0 END) as raptor_cnt
         FROM detections
+        WHERE Date >= '$one_month_ago'
         GROUP BY Date, hr
     ");
     $with_total = 0; $with_slots = 0;
@@ -491,8 +494,9 @@ $flock_species = [];
 $flock_res = $db->query("
     SELECT Com_Name, COUNT(*) as det_count
     FROM detections
+    WHERE Date >= '$one_month_ago'
     GROUP BY Sci_Name
-    HAVING det_count >= 5
+    HAVING det_count >= 3
     ORDER BY det_count DESC
     LIMIT 8
 ");
