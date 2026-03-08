@@ -669,6 +669,7 @@ $db->close();
                     data-hide-text="Show top 10 ↑">
                 Show all <?php echo count($gone_quiet); ?> inactive species ↓
             </button>
+            <?php endif; ?>
         </section>
     </div>
 
@@ -715,7 +716,6 @@ $db->close();
             Show all <?php echo count($yoy_comparison); ?> comparisons ↓
         </button>
         <?php endif; ?>
-    </section>
     </section>
 
     <!-- Seasonal Presence -->
