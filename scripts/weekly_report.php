@@ -139,23 +139,27 @@ if (isset($_GET['ascii'])) {
         font-size: 1.1em;
         margin-top: 10px;
     }
-    .kpi-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    .kpi-cards {
+        display: flex;
+        flex-wrap: wrap;
         gap: 20px;
         margin-bottom: 40px;
+        width: 100%;
     }
     .kpi-card {
         background: var(--bg-card);
-        padding: 24px;
+        padding: 24px 15px;
         border-radius: 16px;
         border: 1px solid var(--border);
         text-align: center;
         box-shadow: var(--shadow-sm);
         transition: transform 0.2s;
+        flex: 1 1 180px;
+        min-width: 180px;
+        max-width: none;
     }
     .kpi-card:hover { transform: translateY(-5px); }
-    .kpi-val { font-size: 2.1em; font-weight: 800; display: block; margin-bottom: 4px; white-space: nowrap; }
+    .kpi-val { font-size: 2em; font-weight: 800; display: block; margin-bottom: 4px; white-space: nowrap; }
     .kpi-label { font-size: 0.85em; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-muted); }
     
     .trend { font-size: 0.7em; padding: 2px 8px; border-radius: 10px; font-weight: bold; margin-left: 8px; vertical-align: middle; }
@@ -208,7 +212,7 @@ if (isset($_GET['ascii'])) {
         <div class="report-date"><?php echo date('M jS', $startdate); ?> — <?php echo date('M jS, Y', $enddate); ?></div>
     </header>
 
-    <div class="kpi-grid">
+    <div class="kpi-cards">
         <div class="kpi-card">
             <span class="kpi-val"><?php echo number_format($total_detections); ?></span>
             <span class="kpi-label">Total Detections <?php echo get_trend_html($total_detections, $prior_total); ?></span>
