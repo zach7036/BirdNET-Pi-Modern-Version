@@ -162,6 +162,7 @@ elseif ($config["LONGITUDE"] == "0.000") {
   <button type="button" class="icon" onclick="myFunction()"><img src="images/menu.png"></button>
 </div>
 <form action="index.php" method="GET" id="views" target="_top">
+<input type="hidden" name="subview" id="sidebar_subview" value="">
 <div class="sidebar" id="mySidebar">
   <div class="sidebar-header">
     <div class="sidebar-logo">
@@ -170,25 +171,24 @@ elseif ($config["LONGITUDE"] == "0.000") {
     <button type="button" class="sidebar-toggle" onclick="myFunction()">«</button>
   </div>
   <div class="sidebar-nav">
-    <button type="submit" name="view" value="Overview" form="views">🏠 <span>Overview</span></button>
-
-    <button type="submit" name="view" value="Spectrogram" form="views">📊 <span>Spectrogram</span></button>
-    <button type="submit" name="view" value="Analytics" form="views">📈 <span>Analytics</span></button>
-    <button type="submit" name="view" value="Species" form="views">🐧 <span>Species</span></button>
-    <button type="submit" name="view" value="Report" form="views">📰 <span>Report</span></button>
+    <button type="submit" name="view" value="Overview" form="views" onclick="document.getElementById('sidebar_subview').value='';">🏠 <span>Overview</span></button>
+    <button type="submit" name="view" value="Spectrogram" form="views" onclick="document.getElementById('sidebar_subview').value='';">📊 <span>Spectrogram</span></button>
+    <button type="submit" name="view" value="Analytics" form="views" onclick="document.getElementById('sidebar_subview').value='';">📈 <span>Analytics</span></button>
+    <button type="submit" name="view" value="Species" form="views" onclick="document.getElementById('sidebar_subview').value='';">🐧 <span>Species</span></button>
+    <button type="submit" name="view" value="Report" form="views" onclick="document.getElementById('sidebar_subview').value='';">📰 <span>Report</span></button>
     <div class="sidebar-dropdown">
       <button type="button" class="sidebar-dropdown-toggle">🧬 <span>Insights</span> <span class="dropdown-arrow">▼</span></button>
       <div class="sidebar-dropdown-content">
-        <button type="submit" name="view" value="Insights" data-subview="dashboard" onclick="this.form.action='index.php?view=Insights&subview=dashboard';">🏠 <span>Dashboard</span></button>
-        <button type="submit" name="view" value="Insights" data-subview="behavior" onclick="this.form.action='index.php?view=Insights&subview=behavior';">🕐 <span>Behavior</span></button>
-        <button type="submit" name="view" value="Insights" data-subview="migration" onclick="this.form.action='index.php?view=Insights&subview=migration';">🦅 <span>Migration</span></button>
-        <button type="submit" name="view" value="Insights" data-subview="environmental" onclick="this.form.action='index.php?view=Insights&subview=environmental';">🌤️ <span>Weather</span></button>
-        <button type="submit" name="view" value="Insights" data-subview="health" onclick="this.form.action='index.php?view=Insights&subview=health';">🔍 <span>Health</span></button>
+        <button type="submit" name="view" value="Insights" data-subview="dashboard" onclick="document.getElementById('sidebar_subview').value='dashboard';">🏠 <span>Dashboard</span></button>
+        <button type="submit" name="view" value="Insights" data-subview="behavior" onclick="document.getElementById('sidebar_subview').value='behavior';">🕐 <span>Behavior</span></button>
+        <button type="submit" name="view" value="Insights" data-subview="migration" onclick="document.getElementById('sidebar_subview').value='migration';">🦅 <span>Migration</span></button>
+        <button type="submit" name="view" value="Insights" data-subview="environmental" onclick="document.getElementById('sidebar_subview').value='environmental';">🌤️ <span>Weather</span></button>
+        <button type="submit" name="view" value="Insights" data-subview="health" onclick="document.getElementById('sidebar_subview').value='health';">🔍 <span>Health</span></button>
       </div>
     </div>
-    <button type="submit" name="view" value="Recordings" form="views">🎵 <span>Recordings</span></button>
-    <button type="submit" name="view" value="View Log" form="views">📝 <span>Log</span></button>
-    <button type="submit" name="view" value="Tools" form="views">⚙️ <span>Tools</span><?php if(isset($_SESSION['behind']) && intval($_SESSION['behind']) >= 50 && ($config['SILENCE_UPDATE_INDICATOR'] != 1)){ $updatediv = ' <div class="updatenumber">'.$_SESSION["behind"].'</div>'; } else { $updatediv = ""; } echo $updatediv; ?></button>
+    <button type="submit" name="view" value="Recordings" form="views" onclick="document.getElementById('sidebar_subview').value='';">🎵 <span>Recordings</span></button>
+    <button type="submit" name="view" value="View Log" form="views" onclick="document.getElementById('sidebar_subview').value='';">📝 <span>Log</span></button>
+    <button type="submit" name="view" value="Tools" form="views" onclick="document.getElementById('sidebar_subview').value='';">⚙️ <span>Tools</span><?php if(isset($_SESSION['behind']) && intval($_SESSION['behind']) >= 50 && ($config['SILENCE_UPDATE_INDICATOR'] != 1)){ $updatediv = ' <div class="updatenumber">'.$_SESSION["behind"].'</div>'; } else { $updatediv = ""; } echo $updatediv; ?></button>
     <script>
       // Dropdown Toggle Logic
       document.addEventListener('DOMContentLoaded', function() {
