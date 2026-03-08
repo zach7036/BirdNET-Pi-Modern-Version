@@ -75,7 +75,7 @@ if ($subview == 'dashboard') {
 }
 
 if ($subview == 'behavior') {
-    $dawn_chorus = []; $dawn_res = $db->query("SELECT Com_Name, AVG(CAST(substr(Time, 1, 2) AS REAL) * 60 + CAST(substr(Time, 4, 2) AS REAL)) as avg_minutes, COUNT(*) as cnt FROM detections WHERE CAST(substr(Time, 1, 2) AS INTEGER) BETWEEN 4 AND 10 GROUP BY Sci_Name HAVING cnt >= 3 ORDER BY avg_minutes ASC LIMIT 10");
+    $dawn_chorus = []; $dawn_res = $db->query("SELECT Com_Name, AVG(CAST(substr(Time, 1, 2) AS REAL) * 60 + CAST(substr(Time, 4, 2) AS REAL)) as avg_minutes, COUNT(*) as cnt FROM detections WHERE CAST(substr(Time, 1, 2) AS INTEGER) BETWEEN 4 AND 10 GROUP BY Sci_Name HAVING cnt >= 3 ORDER BY avg_minutes ASC");
     while($row = $dawn_res->fetchArray(SQLITE3_ASSOC)) { $hrs = intval($row['avg_minutes'] / 60); $mins = intval($row['avg_minutes']) % 60; $row['avg_time'] = sprintf('%d:%02d AM', $hrs, $mins); $dawn_chorus[] = $row; }
     $hourly_activity = array_fill(0, 24, 0); $hourly_res = $db->query("SELECT CAST(substr(Time, 1, 2) AS INTEGER) as hour, COUNT(*) as cnt FROM detections GROUP BY hour ORDER BY hour ASC");
     while($row = $hourly_res->fetchArray(SQLITE3_ASSOC)) { $hourly_activity[$row['hour']] = $row['cnt']; }
@@ -84,7 +84,7 @@ if ($subview == 'behavior') {
     $peak_hour_idx = array_search(max($hourly_activity), $hourly_activity);
     $peak_hour_label = ($peak_hour_idx == 0) ? '12 AM' : (($peak_hour_idx < 12) ? $peak_hour_idx . ' AM' : (($peak_hour_idx == 12) ? '12 PM' : ($peak_hour_idx - 12) . ' PM'));
     $peak_hour_count = max($hourly_activity);
-    $nocturnal = []; $noct_res = $db->query("SELECT Com_Name, COUNT(*) as cnt, AVG(CAST(substr(Time, 1, 2) AS REAL) * 60 + CAST(substr(Time, 4, 2) AS REAL)) as avg_minutes FROM detections WHERE CAST(substr(Time, 1, 2) AS INTEGER) >= 22 OR CAST(substr(Time, 1, 2) AS INTEGER) < 4 GROUP BY Sci_Name HAVING cnt >= 2 ORDER BY cnt DESC LIMIT 8");
+    $nocturnal = []; $noct_res = $db->query("SELECT Com_Name, COUNT(*) as cnt, AVG(CAST(substr(Time, 1, 2) AS REAL) * 60 + CAST(substr(Time, 4, 2) AS REAL)) as avg_minutes FROM detections WHERE CAST(substr(Time, 1, 2) AS INTEGER) >= 22 OR CAST(substr(Time, 1, 2) AS INTEGER) < 4 GROUP BY Sci_Name HAVING cnt >= 2 ORDER BY cnt DESC");
     while($row = $noct_res->fetchArray(SQLITE3_ASSOC)) { $m = $row['avg_minutes']; $hrs = intval($m / 60); $mins = intval($m) % 60; if ($hrs >= 12) { $row['avg_time'] = sprintf('%d:%02d PM', $hrs == 12 ? 12 : $hrs - 12, $mins); } else { $row['avg_time'] = sprintf('%d:%02d AM', $hrs == 0 ? 12 : $hrs, $mins); } $nocturnal[] = $row; }
     $activity_windows = []; $window_res = $db->query("SELECT Com_Name, MIN(Time) as earliest, MAX(Time) as latest, COUNT(*) as cnt FROM detections GROUP BY Sci_Name HAVING cnt >= 5 ORDER BY cnt DESC LIMIT 10");
     while($row = $window_res->fetchArray(SQLITE3_ASSOC)) { $e_h = intval(substr($row['earliest'], 0, 2)); $e_m = substr($row['earliest'], 3, 2); $l_h = intval(substr($row['latest'], 0, 2)); $l_m = substr($row['latest'], 3, 2); $row['earliest_fmt'] = sprintf('%d:%s %s', $e_h % 12 ?: 12, $e_m, $e_h < 12 ? 'AM' : 'PM'); $row['latest_fmt'] = sprintf('%d:%s %s', $l_h % 12 ?: 12, $l_m, $l_h < 12 ? 'AM' : 'PM'); $activity_windows[] = $row; }
@@ -478,8 +478,8 @@ $db->close();
     <div class="insights-sections-grid">
         <!-- Dawn Chorus Order -->
         <section class="insights-section">
-            <div class="insights-section-title">🌅 Dawn Chorus Order <span class="info-btn">ⓘ<span class="info-tooltip">Species ranked by their earliest typical detection time (4 AM – 10 AM). This shows which birds are the early risers in your area.</span></span></div>
-            <div class="insights-stats-list">
+            <div class="insights-section-title">🌅 Dawn Chorus Order (4 AM – 10 AM) <span class="info-btn">ⓘ<span class="info-tooltip">Species ranked by their earliest typical detection time (4 AM – 10 AM). This shows which birds are the early risers in your area.</span></span></div>
+            <div class="insights-stats-list" style="max-height: 480px; overflow-y: auto;">
                 <?php if(empty($dawn_chorus)): ?>
                 <div class="insights-stats-item">
                     <span class="insights-stats-name">Not enough dawn data yet</span>
@@ -505,7 +505,7 @@ $db->close();
         <!-- Nocturnal Detections -->
         <section class="insights-section">
             <div class="insights-section-title">🦉 Nocturnal Activity (10 PM – 4 AM) <span class="info-btn">ⓘ<span class="info-tooltip">Bird activity detected during night hours. Includes owls, nightjars, and some late-night or early-morning songsters.</span></span></div>
-            <div class="insights-stats-list">
+            <div class="insights-stats-list" style="max-height: 480px; overflow-y: auto;">
                 <?php if(empty($nocturnal)): ?>
                 <div class="insights-stats-item">
                     <span class="insights-stats-name">No regular night-time visitors yet</span>
