@@ -877,7 +877,7 @@ $db->close();
 
     <!-- Ideal Conditions Per Species -->
     <section class="insights-section" style="margin-top: 30px;">
-        <div class="insights-section-title">🎯 Preferred Temperature per Species <span class="info-btn">ⓘ<span class="info-tooltip">The average temperature at which each species is most frequently detected at your station.</span></span></div>
+        <div class="insights-section-title">🎯 Average Detection Temperature per Species <span class="info-btn">ⓘ<span class="info-tooltip">The average ambient temperature recorded at the station during all hours this species was detected. Only includes species with 5+ detections.</span></span></div>
         <div class="insights-stats-list">
             <?php if(empty($species_ideal)): ?>
             <div class="insights-stats-item">
