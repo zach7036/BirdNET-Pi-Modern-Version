@@ -153,12 +153,13 @@ if (isset($_GET['ascii'])) {
         border: 1px solid var(--border);
         text-align: center;
         box-shadow: var(--shadow-sm);
-        transition: transform 0.2s;
+        transition: transform 0.2s, z-index 0.2s;
         flex: 1 1 180px;
         min-width: 180px;
         max-width: none;
+        position: relative;
     }
-    .kpi-card:hover { transform: translateY(-5px); }
+    .kpi-card:hover { transform: translateY(-5px); z-index: 10; }
     .kpi-val { font-size: 2em; font-weight: 800; display: block; margin-bottom: 4px; white-space: nowrap; }
     .kpi-label { font-size: 0.85em; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-muted); }
     
@@ -190,9 +191,11 @@ if (isset($_GET['ascii'])) {
         background: var(--bg-card);
         border-radius: 16px;
         border: 1px solid var(--border);
-        overflow: hidden;
+        /* overflow: hidden; removed to allow tooltips to show */
         box-shadow: var(--shadow-sm);
+        position: relative;
     }
+    .report-section:hover { z-index: 5; }
     .section-title {
         background: var(--bg-table-row);
         padding: 15px 20px;
@@ -218,6 +221,68 @@ if (isset($_GET['ascii'])) {
 
     @media (max-width: 800px) {
         .sections-grid { grid-template-columns: 1fr; }
+    }
+
+    /* Info Tooltip Styles - Synchronized with insights.php */
+    .info-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 18px;
+        height: 18px;
+        background: var(--accent-subtle, rgba(99, 102, 241, 0.1));
+        color: var(--accent, #6366f1);
+        border-radius: 50%;
+        font-size: 11px;
+        font-weight: 800;
+        cursor: help;
+        margin-left: 8px;
+        vertical-align: middle;
+        transition: all 0.2s ease;
+        position: relative;
+    }
+    .info-btn:hover {
+        background: var(--accent, #6366f1);
+        color: white;
+    }
+    .info-tooltip {
+        position: absolute;
+        bottom: 125%;
+        left: 50%;
+        transform: translateX(-50%);
+        background: #1e293b;
+        color: #f8fafc;
+        padding: 12px 16px;
+        border-radius: 10px;
+        font-size: 13px;
+        line-height: 1.4;
+        width: 220px;
+        max-width: 80vw;
+        white-space: normal;
+        word-wrap: break-word;
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+        pointer-events: none;
+        opacity: 0;
+        transition: all 0.2s ease;
+        z-index: 9999;
+        font-weight: 400;
+        text-align: left;
+        text-transform: none;
+        letter-spacing: normal;
+    }
+    .info-tooltip::after {
+        content: '';
+        position: absolute;
+        top: 100%;
+        left: 50%;
+        margin-left: -5px;
+        border-width: 5px;
+        border-style: solid;
+        border-color: #1e293b transparent transparent transparent;
+    }
+    .info-btn:hover .info-tooltip {
+        opacity: 1;
+        bottom: 140%;
     }
 </style>
 
