@@ -405,6 +405,117 @@ $temp_trend_labels = json_encode(array_map(function($r) { return date('M j', str
 $temp_trend_temps = json_encode(array_map(function($r) { return $r['avg_temp']; }, $temp_vs_detections));
 $temp_trend_dets = json_encode(array_map(function($r) { return $r['det_count']; }, $temp_vs_detections));
 
+// =============================================
+// PHASE 5: Species Relationships & Co-occurrence
+// =============================================
+
+// Known raptor families for the "Raptor Effect"
+$raptor_keywords = "('Accipiter%','Buteo%','Falco%','Haliaeetus%','Aquila%','Circus%','Strix%','Bubo%','Megascops%','Asio%','Tyto%')";
+
+// 18. Top Co-occurring Species Pairs (same Date + Hour)
+$cooccur_pairs = [];
+$pair_res = $db->query("
+    SELECT a.Com_Name as species_a, b.Com_Name as species_b, COUNT(*) as times_together
+    FROM detections a
+    INNER JOIN detections b ON a.Date = b.Date
+        AND CAST(substr(a.Time, 1, 2) AS INTEGER) = CAST(substr(b.Time, 1, 2) AS INTEGER)
+        AND a.Sci_Name < b.Sci_Name
+    GROUP BY a.Sci_Name, b.Sci_Name
+    HAVING times_together >= 3
+    ORDER BY times_together DESC
+    LIMIT 10
+");
+if ($pair_res) {
+    while($row = $pair_res->fetchArray(SQLITE3_ASSOC)) {
+        $cooccur_pairs[] = $row;
+    }
+}
+
+// 19. Raptor Effect — Compare songbird detections in hours WITH vs WITHOUT raptor detections
+$raptor_effect = [];
+$raptor_check = $db->querySingle("
+    SELECT COUNT(DISTINCT Date || '-' || substr(Time,1,2)) FROM detections
+    WHERE Sci_Name LIKE 'Accipiter%' OR Sci_Name LIKE 'Buteo%' OR Sci_Name LIKE 'Falco%'
+       OR Sci_Name LIKE 'Haliaeetus%' OR Sci_Name LIKE 'Strix%' OR Sci_Name LIKE 'Bubo%'
+       OR Sci_Name LIKE 'Megascops%' OR Sci_Name LIKE 'Asio%' OR Sci_Name LIKE 'Tyto%'
+       OR Sci_Name LIKE 'Circus%' OR Sci_Name LIKE 'Aquila%'
+");
+$has_raptors = ($raptor_check > 0);
+
+if ($has_raptors) {
+    // Avg songbird count in hours WITH raptors
+    $with_raptor = $db->querySingle("
+        SELECT ROUND(AVG(cnt), 1) FROM (
+            SELECT d.Date, CAST(substr(d.Time, 1, 2) AS INTEGER) as hr, COUNT(*) as cnt
+            FROM detections d
+            WHERE d.Date || '-' || substr(d.Time,1,2) IN (
+                SELECT DISTINCT Date || '-' || substr(Time,1,2) FROM detections
+                WHERE Sci_Name LIKE 'Accipiter%' OR Sci_Name LIKE 'Buteo%' OR Sci_Name LIKE 'Falco%'
+                   OR Sci_Name LIKE 'Haliaeetus%' OR Sci_Name LIKE 'Strix%' OR Sci_Name LIKE 'Bubo%'
+                   OR Sci_Name LIKE 'Megascops%'
+            )
+            AND d.Sci_Name NOT LIKE 'Accipiter%' AND d.Sci_Name NOT LIKE 'Buteo%'
+            AND d.Sci_Name NOT LIKE 'Falco%' AND d.Sci_Name NOT LIKE 'Haliaeetus%'
+            AND d.Sci_Name NOT LIKE 'Strix%' AND d.Sci_Name NOT LIKE 'Bubo%'
+            AND d.Sci_Name NOT LIKE 'Megascops%'
+            GROUP BY d.Date, hr
+        )
+    ") ?: 0;
+
+    // Avg songbird count in hours WITHOUT raptors
+    $without_raptor = $db->querySingle("
+        SELECT ROUND(AVG(cnt), 1) FROM (
+            SELECT d.Date, CAST(substr(d.Time, 1, 2) AS INTEGER) as hr, COUNT(*) as cnt
+            FROM detections d
+            WHERE d.Date || '-' || substr(d.Time,1,2) NOT IN (
+                SELECT DISTINCT Date || '-' || substr(Time,1,2) FROM detections
+                WHERE Sci_Name LIKE 'Accipiter%' OR Sci_Name LIKE 'Buteo%' OR Sci_Name LIKE 'Falco%'
+                   OR Sci_Name LIKE 'Haliaeetus%' OR Sci_Name LIKE 'Strix%' OR Sci_Name LIKE 'Bubo%'
+                   OR Sci_Name LIKE 'Megascops%'
+            )
+            GROUP BY d.Date, hr
+        )
+    ") ?: 0;
+
+    // List raptors detected
+    $raptor_list = [];
+    $rap_res = $db->query("
+        SELECT Com_Name, COUNT(*) as cnt FROM detections
+        WHERE Sci_Name LIKE 'Accipiter%' OR Sci_Name LIKE 'Buteo%' OR Sci_Name LIKE 'Falco%'
+           OR Sci_Name LIKE 'Haliaeetus%' OR Sci_Name LIKE 'Strix%' OR Sci_Name LIKE 'Bubo%'
+           OR Sci_Name LIKE 'Megascops%' OR Sci_Name LIKE 'Asio%' OR Sci_Name LIKE 'Tyto%'
+           OR Sci_Name LIKE 'Circus%' OR Sci_Name LIKE 'Aquila%'
+        GROUP BY Sci_Name ORDER BY cnt DESC LIMIT 5
+    ");
+    if ($rap_res) {
+        while($row = $rap_res->fetchArray(SQLITE3_ASSOC)) {
+            $raptor_list[] = $row;
+        }
+    }
+}
+
+// 20. Flock Patterns — Species with highest average co-detection count per hour
+$flock_species = [];
+$flock_res = $db->query("
+    SELECT d.Com_Name, ROUND(AVG(hourly_peers.peer_count), 1) as avg_peers, COUNT(*) as det_count
+    FROM detections d
+    INNER JOIN (
+        SELECT Date, CAST(substr(Time, 1, 2) AS INTEGER) as hr, COUNT(DISTINCT Sci_Name) - 1 as peer_count
+        FROM detections
+        GROUP BY Date, hr
+        HAVING COUNT(DISTINCT Sci_Name) > 1
+    ) hourly_peers ON d.Date = hourly_peers.Date AND CAST(substr(d.Time, 1, 2) AS INTEGER) = hourly_peers.hr
+    GROUP BY d.Sci_Name
+    HAVING det_count >= 5
+    ORDER BY avg_peers DESC
+    LIMIT 8
+");
+if ($flock_res) {
+    while($row = $flock_res->fetchArray(SQLITE3_ASSOC)) {
+        $flock_species[] = $row;
+    }
+}
+
 $db->close();
 ?>
 
@@ -854,6 +965,95 @@ $db->close();
     </section>
 </div>
 <?php endif; ?>
+
+<!-- ====== PHASE 5: Species Relationships & Co-occurrence ====== -->
+<div class="insights-container">
+    <h2 style="margin: 40px 0 20px; font-size: 1.5em; color: var(--text-heading);">🤝 Species Relationships & Co-occurrence</h2>
+
+    <div class="insights-sections-grid">
+        <!-- Co-occurring Pairs -->
+        <section class="insights-section">
+            <div class="insights-section-title">🔗 Top Co-occurring Pairs</div>
+            <div class="insights-stats-list">
+                <?php if(empty($cooccur_pairs)): ?>
+                <div class="insights-stats-item">
+                    <span class="insights-stats-name">Not enough co-occurrence data yet</span>
+                    <span class="insights-stats-count">—</span>
+                </div>
+                <?php else: ?>
+                <?php foreach($cooccur_pairs as $p): ?>
+                <div class="insights-stats-item">
+                    <div>
+                        <div class="insights-stats-name" style="margin-bottom: 2px;"><?php echo $p['species_a']; ?> + <?php echo $p['species_b']; ?></div>
+                    </div>
+                    <span class="insights-stats-count"><?php echo $p['times_together']; ?>x together</span>
+                </div>
+                <?php endforeach; ?>
+                <?php endif; ?>
+            </div>
+        </section>
+
+        <!-- Flock Patterns -->
+        <section class="insights-section">
+            <div class="insights-section-title">🐦 Flock Patterns (Avg Co-detections)</div>
+            <div class="insights-stats-list">
+                <?php if(empty($flock_species)): ?>
+                <div class="insights-stats-item">
+                    <span class="insights-stats-name">Not enough flock data yet</span>
+                    <span class="insights-stats-count">—</span>
+                </div>
+                <?php else: ?>
+                <?php foreach($flock_species as $f): ?>
+                <div class="insights-stats-item">
+                    <div>
+                        <div class="insights-stats-name" style="margin-bottom: 2px;"><?php echo $f['Com_Name']; ?></div>
+                        <div style="font-size: 0.8em; color: var(--text-muted);"><?php echo number_format($f['det_count']); ?> detections</div>
+                    </div>
+                    <span class="insights-stats-count">~<?php echo $f['avg_peers']; ?> peers/hr</span>
+                </div>
+                <?php endforeach; ?>
+                <?php endif; ?>
+            </div>
+        </section>
+    </div>
+
+    <?php if ($has_raptors): ?>
+    <!-- Raptor Effect -->
+    <section class="insights-section" style="margin-top: 30px;">
+        <div class="insights-section-title">🦅 Raptor Effect</div>
+        <div style="padding: 20px;">
+            <div style="display: flex; flex-wrap: wrap; gap: 20px; margin-bottom: 20px;">
+                <div style="flex: 1 1 200px; background: var(--bg-primary); border-radius: 12px; padding: 20px; text-align: center; border: 1px solid var(--border-light);">
+                    <div style="font-size: 0.85em; color: var(--text-muted); margin-bottom: 8px;">Songbirds/hr WITH Raptors</div>
+                    <div style="font-size: 2em; font-weight: 800; color: #ef4444;"><?php echo $with_raptor; ?></div>
+                </div>
+                <div style="flex: 1 1 200px; background: var(--bg-primary); border-radius: 12px; padding: 20px; text-align: center; border: 1px solid var(--border-light);">
+                    <div style="font-size: 0.85em; color: var(--text-muted); margin-bottom: 8px;">Songbirds/hr WITHOUT Raptors</div>
+                    <div style="font-size: 2em; font-weight: 800; color: #10b981;"><?php echo $without_raptor; ?></div>
+                </div>
+                <div style="flex: 1 1 200px; background: var(--bg-primary); border-radius: 12px; padding: 20px; text-align: center; border: 1px solid var(--border-light);">
+                    <div style="font-size: 0.85em; color: var(--text-muted); margin-bottom: 8px;">Impact</div>
+                    <?php
+                        $impact_pct = ($without_raptor > 0) ? round((($with_raptor - $without_raptor) / $without_raptor) * 100, 1) : 0;
+                        $impact_color = $impact_pct < 0 ? '#ef4444' : '#10b981';
+                        $impact_sign = $impact_pct >= 0 ? '+' : '';
+                    ?>
+                    <div style="font-size: 2em; font-weight: 800; color: <?php echo $impact_color; ?>;"><?php echo $impact_sign . $impact_pct; ?>%</div>
+                </div>
+            </div>
+            <div class="insights-stats-list">
+                <div style="font-size: 0.9em; font-weight: 600; color: var(--text-heading); margin-bottom: 8px;">Raptors Detected at Your Station:</div>
+                <?php foreach($raptor_list as $rap): ?>
+                <div class="insights-stats-item">
+                    <span class="insights-stats-name"><?php echo $rap['Com_Name']; ?></span>
+                    <span class="insights-stats-count"><?php echo $rap['cnt']; ?>x</span>
+                </div>
+                <?php endforeach; ?>
+            </div>
+        </div>
+    </section>
+    <?php endif; ?>
+</div>
 
 <!-- Chart.js for Hourly Activity -->
 <script src="static/Chart.bundle.js"></script>
