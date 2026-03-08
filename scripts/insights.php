@@ -93,10 +93,10 @@ if ($subview == 'behavior') {
 if ($subview == 'migration') {
     $new_arrivals = []; $arrival_res = $db->query("SELECT d.Com_Name, d.Sci_Name, MIN(d.Date) as first_seen, COUNT(*) as cnt FROM detections d WHERE d.Sci_Name NOT IN (SELECT DISTINCT Sci_Name FROM detections WHERE Date < '$two_weeks_ago') AND d.Date >= '$two_weeks_ago' GROUP BY d.Sci_Name ORDER BY first_seen DESC");
     while($row = $arrival_res->fetchArray(SQLITE3_ASSOC)) { $new_arrivals[] = $row; }
-    $gone_quiet = []; $quiet_res = $db->query("SELECT Com_Name, Sci_Name, COUNT(*) as total_cnt, MAX(Date) as last_seen FROM detections WHERE Sci_Name NOT IN (SELECT DISTINCT Sci_Name FROM detections WHERE Date >= '$two_weeks_ago') GROUP BY Sci_Name HAVING total_cnt >= 5 ORDER BY last_seen DESC LIMIT 10");
+    $gone_quiet = []; $quiet_res = $db->query("SELECT Com_Name, Sci_Name, COUNT(*) as total_cnt, MAX(Date) as last_seen FROM detections WHERE Sci_Name NOT IN (SELECT DISTINCT Sci_Name FROM detections WHERE Date >= '$two_weeks_ago') GROUP BY Sci_Name HAVING total_cnt >= 5 ORDER BY last_seen DESC");
     while($row = $quiet_res->fetchArray(SQLITE3_ASSOC)) { $row['days_ago'] = intval((time() - strtotime($row['last_seen'])) / 86400); $gone_quiet[] = $row; }
     $cur_yr = date('Y'); $last_yr = $cur_yr - 1;
-    $yoy_res = $db->query("SELECT a.Com_Name, a.Sci_Name, a.first_this_year, b.first_last_year, CAST(julianday(a.first_this_year) - julianday(b.first_last_year_adjusted) AS INTEGER) as day_diff FROM (SELECT Com_Name, Sci_Name, MIN(Date) as first_this_year FROM detections WHERE strftime('%Y', Date) = '$cur_yr' GROUP BY Sci_Name) a INNER JOIN (SELECT Sci_Name, MIN(Date) as first_last_year, '$cur_yr' || substr(MIN(Date), 5) as first_last_year_adjusted FROM detections WHERE strftime('%Y', Date) = '$last_yr' GROUP BY Sci_Name) b ON a.Sci_Name = b.Sci_Name WHERE day_diff != 0 ORDER BY ABS(day_diff) DESC LIMIT 10");
+    $yoy_res = $db->query("SELECT a.Com_Name, a.Sci_Name, a.first_this_year, b.first_last_year, CAST(julianday(a.first_this_year) - julianday(b.first_last_year_adjusted) AS INTEGER) as day_diff FROM (SELECT Com_Name, Sci_Name, MIN(Date) as first_this_year FROM detections WHERE strftime('%Y', Date) = '$cur_yr' GROUP BY Sci_Name) a INNER JOIN (SELECT Sci_Name, MIN(Date) as first_last_year, '$cur_yr' || substr(MIN(Date), 5) as first_last_year_adjusted FROM detections WHERE strftime('%Y', Date) = '$last_yr' GROUP BY Sci_Name) b ON a.Sci_Name = b.Sci_Name WHERE day_diff != 0 ORDER BY ABS(day_diff) DESC");
     while($row = $yoy_res->fetchArray(SQLITE3_ASSOC)) { $yoy_comparison[] = $row; }
     $seasonal_res = $db->query("SELECT Com_Name, Sci_Name, SUM(CASE WHEN CAST(strftime('%m', Date) AS INTEGER) = 1 THEN 1 ELSE 0 END) as m1, SUM(CASE WHEN CAST(strftime('%m', Date) AS INTEGER) = 2 THEN 1 ELSE 0 END) as m2, SUM(CASE WHEN CAST(strftime('%m', Date) AS INTEGER) = 3 THEN 1 ELSE 0 END) as m3, SUM(CASE WHEN CAST(strftime('%m', Date) AS INTEGER) = 4 THEN 1 ELSE 0 END) as m4, SUM(CASE WHEN CAST(strftime('%m', Date) AS INTEGER) = 5 THEN 1 ELSE 0 END) as m5, SUM(CASE WHEN CAST(strftime('%m', Date) AS INTEGER) = 6 THEN 1 ELSE 0 END) as m6, SUM(CASE WHEN CAST(strftime('%m', Date) AS INTEGER) = 7 THEN 1 ELSE 0 END) as m7, SUM(CASE WHEN CAST(strftime('%m', Date) AS INTEGER) = 8 THEN 1 ELSE 0 END) as m8, SUM(CASE WHEN CAST(strftime('%m', Date) AS INTEGER) = 9 THEN 1 ELSE 0 END) as m9, SUM(CASE WHEN CAST(strftime('%m', Date) AS INTEGER) = 10 THEN 1 ELSE 0 END) as m10, SUM(CASE WHEN CAST(strftime('%m', Date) AS INTEGER) = 11 THEN 1 ELSE 0 END) as m11, SUM(CASE WHEN CAST(strftime('%m', Date) AS INTEGER) = 12 THEN 1 ELSE 0 END) as m12, COUNT(*) as total FROM detections GROUP BY Sci_Name ORDER BY total DESC LIMIT 8");
     while($row = $seasonal_res->fetchArray(SQLITE3_ASSOC)) { $ma = 0; for ($i=1;$i<=12;$i++) if ($row['m'.$i]>0) $ma++; $row['months_active'] = $ma; $row['status'] = $ma >= 10 ? 'Year-round' : ($ma >= 5 ? 'Seasonal' : 'Transient'); $seasonal_top[] = $row; }
@@ -123,7 +123,7 @@ if ($subview == 'environmental') {
         while($row = $temp_res->fetchArray(SQLITE3_ASSOC)) { $temp_brackets[] = $row; }
         $cond_res = $db->query("SELECT w.ConditionCode, COUNT(*) as det_count, COUNT(DISTINCT d.Sci_Name) as species_count FROM detections d INNER JOIN weather w ON d.Date = w.Date AND CAST(substr(d.Time, 1, 2) AS INTEGER) = w.Hour GROUP BY w.ConditionCode ORDER BY det_count DESC LIMIT 8");
         while($row = $cond_res->fetchArray(SQLITE3_ASSOC)) { $code = $row['ConditionCode']; $row['description'] = isset($wmo_codes[$code]) ? $wmo_codes[$code] : "Code $code"; $condition_impact[] = $row; }
-        $ideal_res = $db->query("SELECT d.Com_Name, ROUND(AVG(w.Temp), 1) as avg_temp, ROUND(MIN(w.Temp), 1) as min_temp, ROUND(MAX(w.Temp), 1) as max_temp, COUNT(*) as cnt FROM detections d INNER JOIN weather w ON d.Date = w.Date AND CAST(substr(d.Time, 1, 2) AS INTEGER) = w.Hour GROUP BY d.Sci_Name HAVING cnt >= 5 ORDER BY cnt DESC LIMIT 8");
+        $ideal_res = $db->query("SELECT d.Com_Name, ROUND(AVG(w.Temp), 1) as avg_temp, ROUND(MIN(w.Temp), 1) as min_temp, ROUND(MAX(w.Temp), 1) as max_temp, COUNT(*) as cnt FROM detections d INNER JOIN weather w ON d.Date = w.Date AND CAST(substr(d.Time, 1, 2) AS INTEGER) = w.Hour GROUP BY d.Sci_Name HAVING cnt >= 5 ORDER BY cnt DESC");
         while($row = $ideal_res->fetchArray(SQLITE3_ASSOC)) { $species_ideal[] = $row; }
         $trend_res = $db->query("SELECT d.Date, COUNT(*) as det_count, ROUND(AVG(w.Temp), 1) as avg_temp FROM detections d LEFT JOIN weather w ON d.Date = w.Date AND CAST(substr(d.Time, 1, 2) AS INTEGER) = w.Hour WHERE d.Date >= '$one_month_ago' GROUP BY d.Date ORDER BY d.Date ASC");
         while($row = $trend_res->fetchArray(SQLITE3_ASSOC)) { $temp_vs_detections[] = $row; }
@@ -139,7 +139,7 @@ if ($subview == 'health') {
     $conf_labels_json = json_encode(array_map(function($r) { return date('M j', strtotime($r['Date'])); }, $confidence_trend));
     $conf_values_json = json_encode(array_map(function($r) { return floatval($r['avg_conf']); }, $confidence_trend));
     $overall_avg_conf = $db->querySingle("SELECT ROUND(AVG(Confidence), 3) FROM detections") ?: 0;
-    $phantom_res = $db->query("SELECT Com_Name, ROUND(AVG(Confidence), 3) as avg_conf, COUNT(*) as cnt, ROUND(MIN(Confidence), 3) as min_conf FROM detections GROUP BY Sci_Name HAVING cnt >= 3 ORDER BY avg_conf ASC LIMIT 8");
+    $phantom_res = $db->query("SELECT Com_Name, Sci_Name, COUNT(*) as cnt, ROUND(AVG(Confidence), 3) as avg_conf, ROUND(MIN(Confidence), 3) as min_conf FROM detections WHERE Date >= '$one_month_ago' GROUP BY Sci_Name HAVING cnt >= 3 AND avg_conf < 0.6 ORDER BY avg_conf ASC");
     while($row = $phantom_res->fetchArray(SQLITE3_ASSOC)) { $phantom_species[] = $row; }
     $avg_daily = $db->querySingle("SELECT ROUND(AVG(cnt), 1) FROM (SELECT COUNT(*) as cnt FROM detections GROUP BY Date)") ?: 0;
     $burst_res = $db->query("SELECT Date, COUNT(*) as cnt, COUNT(DISTINCT Sci_Name) as species_count FROM detections GROUP BY Date HAVING cnt > $avg_daily * 1.5 ORDER BY cnt DESC LIMIT 5");
@@ -149,7 +149,7 @@ if ($subview == 'health') {
     $high_conf_count = $db->querySingle("SELECT COUNT(*) FROM detections WHERE Confidence >= 0.8") ?: 0;
     $med_conf_count = $db->querySingle("SELECT COUNT(*) FROM detections WHERE Confidence >= 0.5 AND Confidence < 0.8") ?: 0;
     $low_conf_count = $db->querySingle("SELECT COUNT(*) FROM detections WHERE Confidence < 0.5") ?: 0;
-    $exp_res = $db->query("SELECT Com_Name, COUNT(DISTINCT strftime('%Y', Date)) as years_present FROM detections WHERE strftime('%j', Date) BETWEEN strftime('%j', 'now', '-3 days') AND strftime('%j', 'now', '+3 days') AND strftime('%Y', Date) < strftime('%Y', 'now') GROUP BY Sci_Name ORDER BY years_present DESC LIMIT 10");
+    $exp_res = $db->query("SELECT Com_Name, Sci_Name, COUNT(DISTINCT strftime('%Y', Date)) as years_present FROM detections WHERE strftime('%j', Date) BETWEEN strftime('%j', 'now', '-3 days') AND strftime('%j', 'now', '+3 days') AND strftime('%Y', Date) < strftime('%Y', 'now') GROUP BY Sci_Name ORDER BY years_present DESC");
     while($row = $exp_res->fetchArray(SQLITE3_ASSOC)) { $expected_today[] = $row; }
     $top_5_res = $db->query("SELECT Sci_Name, Com_Name FROM detections GROUP BY Sci_Name ORDER BY COUNT(*) DESC LIMIT 5");
     while($row = $top_5_res->fetchArray(SQLITE3_ASSOC)) { $pw = $db->querySingle("SELECT strftime('%W', Date) as week FROM detections WHERE Sci_Name = '" . $db->escapeString($row['Sci_Name']) . "' GROUP BY week ORDER BY COUNT(*) DESC LIMIT 1"); $row['peak_week'] = $pw ?: '??'; $top_5_species[] = $row; }
@@ -458,24 +458,33 @@ $db->close();
 
         <section class="insights-section">
             <div class="insights-section-title">💎 Rarest Detections (&lt; 5 ever) <span class="info-btn">ⓘ<span class="info-tooltip">These species are vagrants or potential misidentifications that have appeared very infrequently at your station.</span></span></div>
-            <div class="insights-stats-list" style="max-height: 400px; overflow-y: auto;">
+            <div class="insights-stats-list">
                 <?php if(empty($rarest)): ?>
                 <div class="insights-stats-item">
                     <span class="insights-stats-name">No rare species detected yet</span>
                     <span class="insights-stats-count">—</span>
                 </div>
                 <?php else: ?>
-                <?php foreach($rarest as $r): ?>
-                <div class="insights-stats-item">
+                <?php $rank_r = 1; foreach($rarest as $r): ?>
+                <div class="insights-stats-item <?php echo $rank_r > 10 ? 'hidden-item' : ''; ?>">
                     <div>
                         <div class="insights-stats-name" style="margin-bottom: 2px;"><?php echo $r['Com_Name']; ?></div>
-                        <div style="font-size: 0.8em; color: var(--text-muted);">Last seen: <?php echo date('M j, Y', strtotime($r['last_seen'])); ?></div>
+                        <div style="font-size: 0.8em; color: var(--text-muted);">First seen: <?php echo date('M j, Y', strtotime($r['first_seen'] ?? '')); ?> · Last: <?php echo date('M j, Y', strtotime($r['last_seen'])); ?></div>
                     </div>
                     <span class="insights-stats-count"><?php echo $r['cnt']; ?>x</span>
                 </div>
-                <?php endforeach; ?>
+                <?php $rank_r++; endforeach; ?>
                 <?php endif; ?>
             </div>
+            <?php if(count($rarest) > 10): ?>
+            <button class="show-list-btn" 
+                    onclick="toggleItems(this)" 
+                    data-expanded="false" 
+                    data-show-text="Show all <?php echo count($rarest); ?> rare species ↓" 
+                    data-hide-text="Show top 10 species ↑">
+                Show all <?php echo count($rarest); ?> rare species ↓
+            </button>
+            <?php endif; ?>
         </section>
     </div>
     <?php endif; ?>
@@ -641,17 +650,25 @@ $db->close();
                     <span class="insights-stats-count">✓</span>
                 </div>
                 <?php else: ?>
-                <?php foreach($gone_quiet as $q): ?>
-                <div class="insights-stats-item">
+                <?php $rank_gq = 1; foreach($gone_quiet as $q): ?>
+                <div class="insights-stats-item <?php echo $rank_gq > 10 ? 'hidden-item' : ''; ?>">
                     <div>
                         <div class="insights-stats-name" style="margin-bottom: 2px;"><?php echo $q['Com_Name']; ?></div>
                         <div style="font-size: 0.8em; color: var(--text-muted);"><?php echo $q['total_cnt']; ?> total · Last: <?php echo date('M j', strtotime($q['last_seen'])); ?></div>
                     </div>
                     <span class="insights-stats-count" style="color: #ef4444;"><?php echo $q['days_ago']; ?>d ago</span>
                 </div>
-                <?php endforeach; ?>
+                <?php $rank_gq++; endforeach; ?>
                 <?php endif; ?>
             </div>
+            <?php if(count($gone_quiet) > 10): ?>
+            <button class="show-list-btn" 
+                    onclick="toggleItems(this)" 
+                    data-expanded="false" 
+                    data-show-text="Show all <?php echo count($gone_quiet); ?> inactive species ↓" 
+                    data-hide-text="Show top 10 ↑">
+                Show all <?php echo count($gone_quiet); ?> inactive species ↓
+            </button>
         </section>
     </div>
 
@@ -665,12 +682,12 @@ $db->close();
                 <span class="insights-stats-count">—</span>
             </div>
             <?php else: ?>
-            <?php foreach($yoy_comparison as $y): ?>
-            <div class="insights-stats-item">
+            <?php $rank_yoy = 1; foreach($yoy_comparison as $y): ?>
+            <div class="insights-stats-item <?php echo $rank_yoy > 10 ? 'hidden-item' : ''; ?>">
                 <div>
                     <div class="insights-stats-name" style="margin-bottom: 2px;"><?php echo $y['Com_Name']; ?></div>
                     <div style="font-size: 0.8em; color: var(--text-muted);">
-                        <?php echo $current_year; ?>: <?php echo date('M j', strtotime($y['first_this_year'])); ?>
+                        <?php echo $cur_yr; ?>: <?php echo date('M j', strtotime($y['first_this_year'])); ?>
                         · <?php echo $last_year; ?>: <?php echo date('M j', strtotime($y['first_last_year'])); ?>
                     </div>
                 </div>
@@ -686,9 +703,19 @@ $db->close();
                 ?>
                 <span class="insights-stats-count" style="color: <?php echo $color; ?>;"><?php echo $label; ?></span>
             </div>
-            <?php endforeach; ?>
+            <?php $rank_yoy++; endforeach; ?>
             <?php endif; ?>
         </div>
+        <?php if(count($yoy_comparison) > 10): ?>
+        <button class="show-list-btn" 
+                onclick="toggleItems(this)" 
+                data-expanded="false" 
+                data-show-text="Show all <?php echo count($yoy_comparison); ?> comparisons ↓" 
+                data-hide-text="Show top 10 ↑">
+            Show all <?php echo count($yoy_comparison); ?> comparisons ↓
+        </button>
+        <?php endif; ?>
+    </section>
     </section>
 
     <!-- Seasonal Presence -->
@@ -811,17 +838,26 @@ $db->close();
                 <span class="insights-stats-count">—</span>
             </div>
             <?php else: ?>
-            <?php foreach($species_ideal as $sp): ?>
-            <div class="insights-stats-item">
+            <?php $rank_temp = 1; foreach($species_ideal as $sp): ?>
+            <div class="insights-stats-item <?php echo $rank_temp > 10 ? 'hidden-item' : ''; ?>">
                 <div>
                     <div class="insights-stats-name" style="margin-bottom: 2px;"><?php echo $sp['Com_Name']; ?></div>
                     <div style="font-size: 0.8em; color: var(--text-muted);">Range: <?php echo $sp['min_temp']; ?>°F – <?php echo $sp['max_temp']; ?>°F · <?php echo number_format($sp['cnt']); ?> detections</div>
                 </div>
                 <span class="insights-stats-count">~<?php echo $sp['avg_temp']; ?>°F</span>
             </div>
-            <?php endforeach; ?>
+            <?php $rank_temp++; endforeach; ?>
             <?php endif; ?>
         </div>
+        <?php if(count($species_ideal) > 10): ?>
+        <button class="show-list-btn" 
+                onclick="toggleItems(this)" 
+                data-expanded="false" 
+                data-show-text="Show all <?php echo count($species_ideal); ?> species ↓" 
+                data-hide-text="Show top 10 species ↑">
+            Show all <?php echo count($species_ideal); ?> species ↓
+        </button>
+        <?php endif; ?>
     </section>
     <?php endif; ?>
     <?php endif; ?>
@@ -871,8 +907,8 @@ $db->close();
                     <span class="insights-stats-count">—</span>
                 </div>
                 <?php else: ?>
-                <?php foreach($phantom_species as $ph): ?>
-                <div class="insights-stats-item">
+                <?php $rank_ph = 1; foreach($phantom_species as $ph): ?>
+                <div class="insights-stats-item <?php echo $rank_ph > 10 ? 'hidden-item' : ''; ?>">
                     <div>
                         <div class="insights-stats-name" style="margin-bottom: 2px;"><?php echo $ph['Com_Name']; ?></div>
                         <div style="font-size: 0.8em; color: var(--text-muted);"><?php echo $ph['cnt']; ?> detections · Min: <?php echo $ph['min_conf']; ?></div>
@@ -882,9 +918,18 @@ $db->close();
                     ?>
                     <span class="insights-stats-count" style="color: <?php echo $conf_color; ?>;">~<?php echo $ph['avg_conf']; ?></span>
                 </div>
-                <?php endforeach; ?>
+                <?php $rank_ph++; endforeach; ?>
                 <?php endif; ?>
             </div>
+            <?php if(count($phantom_species) > 10): ?>
+            <button class="show-list-btn" 
+                    onclick="toggleItems(this)" 
+                    data-expanded="false" 
+                    data-show-text="Show all <?php echo count($phantom_species); ?> phantom species ↓" 
+                    data-hide-text="Show top 10 species ↑">
+                Show all <?php echo count($phantom_species); ?> phantom species ↓
+            </button>
+            <?php endif; ?>
         </section>
 
         <!-- Detection Bursts & Silent Days -->
@@ -981,14 +1026,23 @@ $db->close();
                     <span class="insights-stats-count">—</span>
                 </div>
                 <?php else: ?>
-                <?php foreach($expected_today as $exp): ?>
-                <div class="insights-stats-item">
+                <?php $rank_ex = 1; foreach($expected_today as $exp): ?>
+                <div class="insights-stats-item <?php echo $rank_ex > 10 ? 'hidden-item' : ''; ?>">
                     <span class="insights-stats-name"><?php echo $exp['Com_Name']; ?></span>
                     <span class="insights-stats-count">Present in <?php echo $exp['years_present']; ?> past years</span>
                 </div>
-                <?php endforeach; ?>
+                <?php $rank_ex++; endforeach; ?>
                 <?php endif; ?>
             </div>
+            <?php if(count($expected_today) > 10): ?>
+            <button class="show-list-btn" 
+                    onclick="toggleItems(this)" 
+                    data-expanded="false" 
+                    data-show-text="Show all <?php echo count($expected_today); ?> expected species ↓" 
+                    data-hide-text="Show top 10 species ↑">
+                Show all <?php echo count($expected_today); ?> expected species ↓
+            </button>
+            <?php endif; ?>
             <div style="padding: 10px 15px; font-size: 0.8em; color: var(--text-muted); border-top: 1px solid var(--border-light);">
                 Based on species detected within +/- 3 days of today in previous years.
             </div>

@@ -166,6 +166,21 @@ if (isset($_GET['ascii'])) {
     .trend.up { background: #dcfce7; color: #166534; }
     .trend.down { background: #fee2e2; color: #991b1b; }
 
+    .hidden-item { display: none !important; }
+    .show-list-btn {
+        width: 100%;
+        padding: 12px;
+        background: var(--bg-card);
+        border: none;
+        border-top: 1px solid var(--border);
+        color: var(--accent);
+        font-weight: 600;
+        cursor: pointer;
+        transition: background 0.2s;
+        font-size: 0.9em;
+    }
+    .show-list-btn:hover { background: var(--bg-table-row); }
+
     .sections-grid {
         display: grid;
         grid-template-columns: 1fr 1fr;
@@ -239,12 +254,13 @@ if (isset($_GET['ascii'])) {
 
     <div class="sections-grid">
         <section class="report-section">
-            <div class="section-title">🏆 Top 10 Species <span class="info-btn">ⓘ<span class="info-tooltip">The most frequently detected species of the week, ranked by total count.</span></span></div>
+            <div class="section-title">🏆 Top Species <span class="info-btn">ⓘ<span class="info-tooltip">The most frequently detected species of the week, ranked by total count.</span></span></div>
             <ul class="report-list">
                 <?php
-                for ($i = 0; $i < min(10, count($detections)); $i++) {
-                    $d = $detections[$i];
-                    echo '<li class="report-item">';
+                $rank = 1;
+                foreach ($detections as $d) {
+                    $hidden_class = ($rank > 10) ? 'hidden-item' : '';
+                    echo '<li class="report-item ' . $hidden_class . '">';
                     echo '  <div class="species-info">';
                     echo '    <span class="species-name">' . $d['name'] . '</span>';
                     echo '    <span class="species-sci">' . $d['sci'] . '</span>';
@@ -254,9 +270,19 @@ if (isset($_GET['ascii'])) {
                     echo '    ' . get_trend_html($d['count'], $d['prior_count']);
                     echo '  </div>';
                     echo '</li>';
+                    $rank++;
                 }
                 ?>
             </ul>
+            <?php if (count($detections) > 10): ?>
+            <button class="show-list-btn" 
+                    onclick="toggleItems(this)" 
+                    data-expanded="false" 
+                    data-show-text="Show all <?php echo count($detections); ?> species ↓" 
+                    data-hide-text="Show top 10 species ↑">
+                Show all <?php echo count($detections); ?> species ↓
+            </button>
+            <?php endif; ?>
         </section>
 
         <section class="report-section">
@@ -291,3 +317,27 @@ if (isset($_GET['ascii'])) {
         * Data range: <?php echo date('Y-m-d', $startdate); ?> to <?php echo date('Y-m-d', $enddate); ?>
     </footer>
 </div>
+
+<script>
+function toggleItems(btn) {
+    const section = btn.parentElement;
+    const items = section.querySelectorAll('.hidden-item');
+    const isExpanded = btn.getAttribute('data-expanded') === 'true';
+    
+    if (isExpanded) {
+        // Collapse
+        items.forEach(item => {
+            item.style.display = 'none';
+        });
+        btn.innerHTML = btn.getAttribute('data-show-text');
+        btn.setAttribute('data-expanded', 'false');
+    } else {
+        // Expand
+        items.forEach(item => {
+            item.style.display = 'flex';
+        });
+        btn.innerHTML = btn.getAttribute('data-hide-text');
+        btn.setAttribute('data-expanded', 'true');
+    }
+}
+</script>
