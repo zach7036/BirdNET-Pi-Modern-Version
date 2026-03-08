@@ -406,6 +406,84 @@ $temp_trend_dets = json_encode(array_map(function($r) { return $r['det_count']; 
 
 // Phase 5 (Species Co-occurrence) deferred — requires pre-computed caching for Pi performance.
 
+// =============================================
+// PHASE 6: Confidence, Quality & Silence Anomalies
+// =============================================
+
+// 21. Average Confidence Trend (last 30 days)
+$confidence_trend = [];
+$conf_res = $db->query("
+    SELECT Date, ROUND(AVG(Confidence), 3) as avg_conf, COUNT(*) as det_count
+    FROM detections
+    WHERE Date >= '$one_month_ago'
+    GROUP BY Date
+    ORDER BY Date ASC
+");
+if ($conf_res) {
+    while($row = $conf_res->fetchArray(SQLITE3_ASSOC)) {
+        $confidence_trend[] = $row;
+    }
+}
+$conf_labels_json = json_encode(array_map(function($r) { return date('M j', strtotime($r['Date'])); }, $confidence_trend));
+$conf_values_json = json_encode(array_map(function($r) { return floatval($r['avg_conf']); }, $confidence_trend));
+
+// Overall avg confidence
+$overall_avg_conf = $db->querySingle("SELECT ROUND(AVG(Confidence), 3) FROM detections") ?: 0;
+
+// 22. Lowest Confidence Species ("Phantom Suspects") — species with lowest avg confidence
+$phantom_species = [];
+$phantom_res = $db->query("
+    SELECT Com_Name, ROUND(AVG(Confidence), 3) as avg_conf, COUNT(*) as cnt,
+           ROUND(MIN(Confidence), 3) as min_conf
+    FROM detections
+    GROUP BY Sci_Name
+    HAVING cnt >= 3
+    ORDER BY avg_conf ASC
+    LIMIT 8
+");
+if ($phantom_res) {
+    while($row = $phantom_res->fetchArray(SQLITE3_ASSOC)) {
+        $phantom_species[] = $row;
+    }
+}
+
+// 23. Detection Bursts — Days with unusually high detection counts
+$avg_daily = $db->querySingle("SELECT ROUND(AVG(cnt), 1) FROM (SELECT COUNT(*) as cnt FROM detections GROUP BY Date)") ?: 0;
+$burst_days = [];
+$burst_res = $db->query("
+    SELECT Date, COUNT(*) as cnt, COUNT(DISTINCT Sci_Name) as species_count
+    FROM detections
+    GROUP BY Date
+    HAVING cnt > $avg_daily * 1.5
+    ORDER BY cnt DESC
+    LIMIT 5
+");
+if ($burst_res) {
+    while($row = $burst_res->fetchArray(SQLITE3_ASSOC)) {
+        $burst_days[] = $row;
+    }
+}
+
+// 24. Silent Days — Days with fewest detections (potential system issues)
+$silent_days = [];
+$silent_res = $db->query("
+    SELECT Date, COUNT(*) as cnt
+    FROM detections
+    GROUP BY Date
+    HAVING cnt <= 3
+    ORDER BY Date DESC
+    LIMIT 5
+");
+if ($silent_res) {
+    while($row = $silent_res->fetchArray(SQLITE3_ASSOC)) {
+        $silent_days[] = $row;
+    }
+}
+
+// 25. High vs Low confidence breakdown
+$high_conf_count = $db->querySingle("SELECT COUNT(*) FROM detections WHERE Confidence >= 0.8") ?: 0;
+$med_conf_count = $db->querySingle("SELECT COUNT(*) FROM detections WHERE Confidence >= 0.5 AND Confidence < 0.8") ?: 0;
+$low_conf_count = $db->querySingle("SELECT COUNT(*) FROM detections WHERE Confidence < 0.5") ?: 0;
 
 $db->close();
 ?>
@@ -857,7 +935,106 @@ $db->close();
 </div>
 <?php endif; ?>
 
-<!-- Phase 5 (Species Co-occurrence) coming soon — requires background pre-computation for Pi performance -->
+<!-- ====== PHASE 6: Confidence, Quality & Silence Anomalies ====== -->
+<div class="insights-container">
+    <h2 style="margin: 40px 0 20px; font-size: 1.5em; color: var(--text-heading);">🔍 Confidence & System Health</h2>
+
+    <!-- Confidence KPIs -->
+    <div class="insights-kpi-cards" style="margin-bottom: 30px;">
+        <div class="insights-kpi-card">
+            <span class="insights-kpi-val"><?php echo $overall_avg_conf; ?></span>
+            <span class="insights-kpi-label">Avg Confidence</span>
+        </div>
+        <div class="insights-kpi-card">
+            <span class="insights-kpi-val" style="color: #10b981;"><?php echo number_format($high_conf_count); ?></span>
+            <span class="insights-kpi-label">High (≥80%)</span>
+        </div>
+        <div class="insights-kpi-card">
+            <span class="insights-kpi-val" style="color: #f59e0b;"><?php echo number_format($med_conf_count); ?></span>
+            <span class="insights-kpi-label">Medium (50-79%)</span>
+        </div>
+        <div class="insights-kpi-card">
+            <span class="insights-kpi-val" style="color: #ef4444;"><?php echo number_format($low_conf_count); ?></span>
+            <span class="insights-kpi-label">Low (<50%)</span>
+        </div>
+    </div>
+
+    <!-- Confidence Trend Chart -->
+    <?php if(!empty($confidence_trend)): ?>
+    <section class="insights-section" style="margin-bottom: 30px;">
+        <div class="insights-section-title">📉 Confidence Trend (Last 30 Days)</div>
+        <div style="padding: 20px;">
+            <canvas id="confidenceTrendChart" height="100"></canvas>
+        </div>
+    </section>
+    <?php endif; ?>
+
+    <div class="insights-sections-grid">
+        <!-- Phantom Species -->
+        <section class="insights-section">
+            <div class="insights-section-title">👻 Phantom Suspects (Lowest Confidence)</div>
+            <div class="insights-stats-list">
+                <?php if(empty($phantom_species)): ?>
+                <div class="insights-stats-item">
+                    <span class="insights-stats-name">No data yet</span>
+                    <span class="insights-stats-count">—</span>
+                </div>
+                <?php else: ?>
+                <?php foreach($phantom_species as $ph): ?>
+                <div class="insights-stats-item">
+                    <div>
+                        <div class="insights-stats-name" style="margin-bottom: 2px;"><?php echo $ph['Com_Name']; ?></div>
+                        <div style="font-size: 0.8em; color: var(--text-muted);"><?php echo $ph['cnt']; ?> detections · Min: <?php echo $ph['min_conf']; ?></div>
+                    </div>
+                    <?php
+                        $conf_color = $ph['avg_conf'] >= 0.7 ? '#10b981' : ($ph['avg_conf'] >= 0.5 ? '#f59e0b' : '#ef4444');
+                    ?>
+                    <span class="insights-stats-count" style="color: <?php echo $conf_color; ?>;">~<?php echo $ph['avg_conf']; ?></span>
+                </div>
+                <?php endforeach; ?>
+                <?php endif; ?>
+            </div>
+        </section>
+
+        <!-- Detection Bursts & Silent Days -->
+        <section class="insights-section">
+            <div class="insights-section-title">📊 Anomaly Days</div>
+            <div class="insights-stats-list">
+                <?php if(!empty($burst_days)): ?>
+                <div style="font-size: 0.9em; font-weight: 600; color: var(--text-heading); padding: 0 15px;">🔥 Detection Bursts (>1.5× avg of <?php echo $avg_daily; ?>/day)</div>
+                <?php foreach($burst_days as $b): ?>
+                <div class="insights-stats-item">
+                    <div>
+                        <div class="insights-stats-name" style="margin-bottom: 2px;"><?php echo date('M j, Y', strtotime($b['Date'])); ?></div>
+                        <div style="font-size: 0.8em; color: var(--text-muted);"><?php echo $b['species_count']; ?> species</div>
+                    </div>
+                    <span class="insights-stats-count" style="color: #10b981;"><?php echo $b['cnt']; ?> detections</span>
+                </div>
+                <?php endforeach; ?>
+                <?php endif; ?>
+
+                <?php if(!empty($silent_days)): ?>
+                <div style="font-size: 0.9em; font-weight: 600; color: var(--text-heading); padding: 10px 15px 0;">🤫 Quiet Days (≤3 detections)</div>
+                <?php foreach($silent_days as $s): ?>
+                <div class="insights-stats-item">
+                    <div>
+                        <div class="insights-stats-name"><?php echo date('M j, Y', strtotime($s['Date'])); ?></div>
+                    </div>
+                    <span class="insights-stats-count" style="color: #ef4444;"><?php echo $s['cnt']; ?> detections</span>
+                </div>
+                <?php endforeach; ?>
+                <?php endif; ?>
+
+                <?php if(empty($burst_days) && empty($silent_days)): ?>
+                <div class="insights-stats-item">
+                    <span class="insights-stats-name">No anomaly days detected</span>
+                    <span class="insights-stats-count">✓</span>
+                </div>
+                <?php endif; ?>
+            </div>
+        </section>
+    </div>
+</div>
 
 <!-- Chart.js for Hourly Activity -->
 <script src="static/Chart.bundle.js"></script>
@@ -943,6 +1120,39 @@ document.addEventListener('DOMContentLoaded', function() {
                         { id: 'y-temp', position: 'right', ticks: { fontColor: '#f59e0b' }, scaleLabel: { display: true, labelString: 'Temp (°F)', fontColor: '#f59e0b' }, gridLines: { drawOnChartArea: false } }
                     ],
                     xAxes: [{ ticks: { fontColor: fontColor, maxRotation: 45, minRotation: 0 } }]
+                }
+            }
+        });
+    }
+
+    // Phase 6: Confidence Trend Chart
+    var confCtx = document.getElementById('confidenceTrendChart');
+    if (confCtx) {
+        new Chart(confCtx, {
+            type: 'line',
+            data: {
+                labels: <?php echo $conf_labels_json; ?>,
+                datasets: [{
+                    label: 'Avg Confidence',
+                    data: <?php echo $conf_values_json; ?>,
+                    borderColor: '#6366f1',
+                    backgroundColor: 'rgba(99, 102, 241, 0.1)',
+                    borderWidth: 2,
+                    pointRadius: 3,
+                    fill: true
+                }]
+            },
+            options: {
+                responsive: true,
+                legend: { labels: { fontColor: fontColor } },
+                scales: {
+                    yAxes: [{ ticks: { fontColor: fontColor, min: 0, max: 1, callback: function(v) { return (v * 100) + '%'; } } }],
+                    xAxes: [{ ticks: { fontColor: fontColor, maxRotation: 45, minRotation: 0 } }]
+                },
+                tooltips: {
+                    callbacks: {
+                        label: function(item) { return (item.yLabel * 100).toFixed(1) + '% confidence'; }
+                    }
                 }
             }
         });
