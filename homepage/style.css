@@ -1883,6 +1883,50 @@ pre#timer.bash {
   font-weight: 500;
 }
 
+/* Dropdown Menu */
+.sidebar-dropdown {
+  display: flex;
+  flex-direction: column;
+}
+
+.sidebar-dropdown-content {
+  display: none;
+  background: rgba(0, 0, 0, 0.02);
+  padding-left: 12px;
+}
+
+.sidebar-dropdown.open .sidebar-dropdown-content {
+  display: flex;
+  flex-direction: column;
+}
+
+.sidebar-dropdown-content button {
+  padding: 10px 24px 10px 48px !important;
+  font-size: 0.9em !important;
+  border-left: 2px solid transparent !important;
+}
+
+.sidebar-dropdown-content button:hover {
+  background-color: rgba(99, 102, 241, 0.05) !important;
+}
+
+.sidebar-dropdown-content button.active {
+  color: var(--accent) !important;
+  background-color: var(--accent-subtle) !important;
+  border-left: 2px solid var(--accent) !important;
+}
+
+.dropdown-arrow {
+  margin-left: auto;
+  font-size: 0.7em;
+  transition: transform 0.2s;
+  opacity: 0.5;
+}
+
+.sidebar-dropdown.open .dropdown-arrow {
+  transform: rotate(180deg);
+}
+
 .mobile-header {
   display: none;
   background-color: var(--bg-card);

@@ -176,10 +176,42 @@ elseif ($config["LONGITUDE"] == "0.000") {
     <button type="submit" name="view" value="Analytics" form="views">📈 <span>Analytics</span></button>
     <button type="submit" name="view" value="Species" form="views">🐧 <span>Species</span></button>
     <button type="submit" name="view" value="Report" form="views">📰 <span>Report</span></button>
-    <button type="submit" name="view" value="Insights" form="views">🧬 <span>Insights</span></button>
+    <div class="sidebar-dropdown">
+      <button type="button" class="sidebar-dropdown-toggle">🧬 <span>Insights</span> <span class="dropdown-arrow">▼</span></button>
+      <div class="sidebar-dropdown-content">
+        <button type="submit" name="view" value="Insights" data-subview="dashboard" onclick="this.form.action='index.php?view=Insights&subview=dashboard';">🏠 <span>Dashboard</span></button>
+        <button type="submit" name="view" value="Insights" data-subview="behavior" onclick="this.form.action='index.php?view=Insights&subview=behavior';">🕐 <span>Behavior</span></button>
+        <button type="submit" name="view" value="Insights" data-subview="migration" onclick="this.form.action='index.php?view=Insights&subview=migration';">🦅 <span>Migration</span></button>
+        <button type="submit" name="view" value="Insights" data-subview="environmental" onclick="this.form.action='index.php?view=Insights&subview=environmental';">🌤️ <span>Weather</span></button>
+        <button type="submit" name="view" value="Insights" data-subview="health" onclick="this.form.action='index.php?view=Insights&subview=health';">🔍 <span>Health</span></button>
+      </div>
+    </div>
     <button type="submit" name="view" value="Recordings" form="views">🎵 <span>Recordings</span></button>
     <button type="submit" name="view" value="View Log" form="views">📝 <span>Log</span></button>
     <button type="submit" name="view" value="Tools" form="views">⚙️ <span>Tools</span><?php if(isset($_SESSION['behind']) && intval($_SESSION['behind']) >= 50 && ($config['SILENCE_UPDATE_INDICATOR'] != 1)){ $updatediv = ' <div class="updatenumber">'.$_SESSION["behind"].'</div>'; } else { $updatediv = ""; } echo $updatediv; ?></button>
+    <script>
+      // Dropdown Toggle Logic
+      document.addEventListener('DOMContentLoaded', function() {
+        const dropdown = document.querySelector('.sidebar-dropdown');
+        const toggle = dropdown.querySelector('.sidebar-dropdown-toggle');
+        const urlParams = new URLSearchParams(window.location.search);
+        
+        // Toggle on click
+        toggle.addEventListener('click', function(e) {
+          e.preventDefault();
+          dropdown.classList.toggle('open');
+        });
+
+        // Keep open if on Insights page
+        if (urlParams.get('view') === 'Insights') {
+          dropdown.classList.add('open');
+          // Highlight active sub-button
+          const subview = urlParams.get('subview') || 'dashboard';
+          const subBtn = dropdown.querySelector(`button[data-subview="${subview}"]`);
+          if (subBtn) subBtn.classList.add('active');
+        }
+      });
+    </script>
   </div>
 
   <style>
@@ -350,11 +382,24 @@ window.onload = function() {
       elements[i].addEventListener('click', setViewsOpacity, false);
   }
 };
-var topbuttons = document.querySelectorAll("button[form='views']");
+var topbuttons = document.querySelectorAll("button[form='views'], .sidebar-nav button[type='submit']");
 if(window.location.search.substr(1) != '') {
+  const urlParams = new URLSearchParams(window.location.search);
+  const currentView = urlParams.get('view');
+  const currentSubview = urlParams.get('subview');
+
   for (var i = 0; i < topbuttons.length; i++) {
-    if(topbuttons[i].value == decodeURIComponent(window.location.search.substr(1)).replace(/\+/g,' ').split('=').pop()) {
-      topbuttons[i].classList.add("button-hover");
+    const btnView = topbuttons[i].value;
+    const btnSubview = topbuttons[i].dataset.subview;
+
+    if (btnView === currentView) {
+      if (currentView === 'Insights') {
+        if (btnSubview === currentSubview || (!currentSubview && btnSubview === 'dashboard')) {
+          topbuttons[i].classList.add("button-hover");
+        }
+      } else {
+        topbuttons[i].classList.add("button-hover");
+      }
     }
   }
 } else {
