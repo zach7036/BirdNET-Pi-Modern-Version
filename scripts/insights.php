@@ -166,13 +166,18 @@ $db->close();
         color: var(--text-primary);
     }
     .insights-header {
-        text-align: center;
+        text-align: left;
         margin-bottom: 30px;
         background: var(--bg-card);
-        padding: 30px;
+        padding: 30px 40px;
         border-radius: 20px;
         border: 1px solid var(--border);
         box-shadow: var(--shadow-md);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 20px;
     }
     .insights-header h1 {
         margin: 0;
@@ -345,7 +350,7 @@ $db->close();
 </style>
 
 <div class="insights-container">
-    <header class="insights-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 20px;">
+    <header class="insights-header">
         <div>
             <h1>Insights: <?php 
                 if ($subview == 'dashboard') echo 'Dashboard';

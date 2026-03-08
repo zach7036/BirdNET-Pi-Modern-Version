@@ -113,9 +113,9 @@ if (isset($_GET['ascii'])) {
 
 <style>
     .report-container {
-        padding: 20px;
-        max-width: 1200px;
-        margin: 0 auto;
+        padding: <?php echo (isset($subview) && $subview == 'report') ? '0' : '20px'; ?>;
+        max-width: <?php echo (isset($subview) && $subview == 'report') ? 'none' : '1200px'; ?>;
+        margin: <?php echo (isset($subview) && $subview == 'report') ? '0' : '0 auto'; ?>;
         color: var(--text-primary);
     }
     .report-header {
