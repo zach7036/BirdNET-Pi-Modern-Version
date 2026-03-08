@@ -1,10 +1,18 @@
-<?php
 require_once 'scripts/common.php';
 $db = new SQLite3('./scripts/birds.db', SQLITE3_OPEN_READONLY);
+if (!$db) {
+    echo "<!-- ERROR: Could not open database -->";
+    $lifetime_species = 0;
+    $best_day_count = 0;
+    $max_streak = 0;
+    $rarest = [];
+    $milestones = [];
+    return;
+}
 $db->busyTimeout(1000);
 
 // 1. Lifetime Species
-$lifetime_species = $db->querySingle('SELECT COUNT(DISTINCT(Sci_Name)) FROM detections');
+$lifetime_species = $db->querySingle('SELECT COUNT(DISTINCT(Sci_Name)) FROM detections') ?: 0;
 
 // 2. Best Day Count
 $best_day_res = $db->query('SELECT Date, COUNT(*) as cnt FROM detections GROUP BY Date ORDER BY cnt DESC LIMIT 1')->fetchArray(SQLITE3_ASSOC);
@@ -14,11 +22,14 @@ $best_day_date = $best_day_res ? date('M j, Y', strtotime($best_day_res['Date'])
 // 3. Longest Streak (Consecutive Days with any detection)
 $streak_res = $db->query('SELECT Date FROM detections GROUP BY Date ORDER BY Date ASC');
 $dates = [];
-while($row = $streak_res->fetchArray(SQLITE3_ASSOC)) {
-    $dates[] = $row['Date'];
+if ($streak_res) {
+    while($row = $streak_res->fetchArray(SQLITE3_ASSOC)) {
+        $dates[] = $row['Date'];
+    }
 }
 
 $max_streak = 0;
+// ... (the rest remains similar but safe)
 $current_streak = 0;
 $prev_date = null;
 
@@ -39,17 +50,21 @@ foreach ($dates as $date_str) {
 $max_streak = max($max_streak, $current_streak);
 
 // 4. Rare Species (Detected < 5 times ever)
-$rare_res = $db->query('SELECT Com_Name, Sci_Name, COUNT(*) as cnt, MIN(Date) as first_seen, MAX(Date) as last_seen FROM detections GROUP BY Sci_Name HAVING cnt < 5 ORDER BY cnt ASC, last_seen DESC LIMIT 10');
 $rarest = [];
-while($row = $rare_res->fetchArray(SQLITE3_ASSOC)) {
-    $rarest[] = $row;
+$rare_res = $db->query('SELECT Com_Name, Sci_Name, COUNT(*) as cnt, MIN(Date) as first_seen, MAX(Date) as last_seen FROM detections GROUP BY Sci_Name HAVING cnt < 5 ORDER BY cnt ASC, last_seen DESC LIMIT 10');
+if ($rare_res) {
+    while($row = $rare_res->fetchArray(SQLITE3_ASSOC)) {
+        $rarest[] = $row;
+    }
 }
-$rare_total = $db->querySingle('SELECT COUNT(*) FROM (SELECT Sci_Name FROM detections GROUP BY Sci_Name HAVING COUNT(*) < 5)');
+$rare_total = $db->querySingle('SELECT COUNT(*) FROM (SELECT Sci_Name FROM detections GROUP BY Sci_Name HAVING COUNT(*) < 5)') ?: 0;
 
 // 5. Personal Milestones
 $milestones = [];
-$total_detections = $db->querySingle('SELECT COUNT(*) FROM detections');
-$milestones[] = ["title" => "First Detection", "val" => $db->querySingle('SELECT MIN(Date) FROM detections')];
+$tot_det_res = $db->querySingle('SELECT COUNT(*) FROM detections');
+$total_detections = $tot_det_res ?: 0;
+$first_det = $db->querySingle('SELECT MIN(Date) FROM detections');
+$milestones[] = ["title" => "First Detection", "val" => $first_det ?: 'N/A'];
 $milestones[] = ["title" => "Lifetime Detections", "val" => number_format($total_detections)];
 
 // Top Daily Record for a Single Species
