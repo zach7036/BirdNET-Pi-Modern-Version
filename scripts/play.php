@@ -401,9 +401,11 @@ if(!isset($_GET['species']) && !isset($_GET['filename'])){
 </div>
 <br>
 <?php } ?>
+<?php if ($view != "choose") { ?>
 <form action="views.php" method="GET">
 <input type="hidden" name="view" value="Recordings">
 <table>
+<?php } ?>
 <?php
   #By Date
   if($view == "bydate") {
@@ -654,6 +656,10 @@ for ($row = 0; $row < $num_rows; $row++) {
 
     </div>
     <?php
+  }
+  
+  if ($view != "choose") {
+    echo "</table></form>";
   }
 }
 
