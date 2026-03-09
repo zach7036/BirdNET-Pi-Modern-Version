@@ -379,7 +379,7 @@ function changeDetection(filename,copylink=false) {
 if(!isset($_GET['species']) && !isset($_GET['filename'])){
 ?>
 <div class="play">
-<?php if($view == "byspecies" || $view == "date") { ?>
+<?php if($view == "byspecies" || $view == "date" || $view == "bydate") { ?>
 <style>
    .scrolling-species-view {
        padding: 10px;
@@ -520,7 +520,9 @@ if(!isset($_GET['species']) && !isset($_GET['filename'])){
        opacity: 0.8;
    }
 </style>
+<?php } ?>
 
+<?php if($view == "byspecies" || $view == "date") { ?>
 <div class="scrolling-species-view">
    <div class="sticky-sort-bar">
       <form action="views.php" method="GET" class="sort-options-container">
