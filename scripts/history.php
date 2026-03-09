@@ -216,9 +216,22 @@ if (get_included_files()[0] === __FILE__) {
   <p style="display:none" id="filename"></p>
   <div class="ebird-dialog-header">📋 eBird Checklist Export</div>
   <div class="ebird-dialog-body">
-    <div class="ebird-field">
-      <label>Location Name</label>
-      <input placeholder="e.g. My backyard" id="blocation">
+    <div class="ebird-info-box" style="background: var(--bg-secondary, #f1f5f9); padding: 12px; border-radius: 8px; font-size: 0.85em; color: var(--text-secondary); margin-bottom: 20px; line-height: 1.4;">
+      <strong>What gets exported?</strong><br>
+      A CSV file containing all detections for the selected date with <strong>&gt;75% confidence</strong>. To comply with eBird guidelines, data is aggregated to a maximum of <strong>1 entry per species per hour</strong>.<br><br>
+      <strong>Next Steps:</strong><br>
+      After downloading, go to <a href="https://ebird.org/import" target="_blank" style="color: var(--accent); font-weight: bold; text-decoration: underline;">eBird's Data Import page</a> and select "eBird Record Format (Extended)".
+    </div>
+    
+    <div class="ebird-row">
+      <div class="ebird-field">
+        <label>Export Date</label>
+        <input type="date" id="export_date" value="<?php echo $theDate; ?>">
+      </div>
+      <div class="ebird-field">
+        <label>Location Name</label>
+        <input placeholder="e.g. My backyard" id="blocation">
+      </div>
     </div>
     <div class="ebird-row">
       <div class="ebird-field">
@@ -279,8 +292,9 @@ function submitID() {
   num_observers = document.getElementById("num_observers").value;
   dist_traveled = document.getElementById("dist_traveled").value;
   notes = document.getElementById("notes").value;
+  export_date = document.getElementById("export_date").value;
 
-  window.open("history.php?blocation="+blocation+"&state="+state+"&country="+country+"&protocol="+protocol+"&num_observers="+num_observers+"&dist_traveled="+dist_traveled+"&notes="+notes+"&date="+"<?php echo $theDate; ?>");
+  window.open("history.php?blocation="+blocation+"&state="+state+"&country="+country+"&protocol="+protocol+"&num_observers="+num_observers+"&dist_traveled="+dist_traveled+"&notes="+notes+"&date="+export_date);
 
   document.getElementById('attribution-dialog').innerHTML = "<div class='ebird-dialog-header'>✅ Export Complete</div><div class='ebird-success'><h3>Success!</h3><p>Your checklist will start downloading momentarily.</p><p>Refer to <a target='_blank' href='https://ebird.org/content/eBirdCommon/docs/ebird_import_data_process.pdf'>this guide</a> for information on how to import it in eBird.<br>The checklist file format is: 'eBird Record Format (Extended)'.</p><div class='note'>Only detections with confidence &gt; 75% were included. Entries are limited to 1 per hour per species to comply with eBird guidelines. Always verify your checklist before submitting.</div><button class='ebird-btn-submit' onclick='closeDialog()'>Close</button></div>";
 
