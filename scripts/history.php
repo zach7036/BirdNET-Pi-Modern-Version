@@ -197,7 +197,7 @@ if (get_included_files()[0] === __FILE__) {
   padding: 12px 24px;
   border: none;
   border-radius: 12px;
-  background: var(--accent, #6366f1);
+  background: #6366f1;
   color: white;
   font-size: 1em;
   font-weight: 600;
