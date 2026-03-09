@@ -295,12 +295,24 @@ function submitID() {
 
 </script>  
 
-<div style="text-align: center; margin: 20px auto; max-width: 600px;">
-    <div class="ebird-info-box" style="background: var(--bg-secondary, #f1f5f9); padding: 16px; border-radius: 12px; font-size: 0.9em; color: var(--text-secondary); margin-bottom: 24px; line-height: 1.5; text-align: left; box-shadow: var(--shadow-sm);">
-      <strong style="color: var(--text-heading); font-size: 1.1em;">What gets exported?</strong><br>
-      A CSV file containing all detections for the selected date with <strong>&gt;75% confidence</strong>. To comply with eBird guidelines, data is aggregated to a maximum of <strong>1 entry per species per hour</strong>.<br><br>
-      <strong style="color: var(--text-heading); font-size: 1.1em;">Next Steps:</strong><br>
-      After downloading, go to <a href="https://ebird.org/import" target="_blank" style="color: var(--accent); font-weight: bold; text-decoration: underline;">eBird's Data Import page</a> and select "eBird Record Format (Extended)".
+<div style="text-align: center; margin: 20px auto; max-width: 650px;">
+    <div class="ebird-info-box" style="background: var(--bg-secondary, #f1f5f9); padding: 20px; border-radius: 12px; font-size: 0.9em; color: var(--text-secondary); margin-bottom: 24px; line-height: 1.5; text-align: left; box-shadow: var(--shadow-sm); border: 1px solid var(--border);">
+      <strong style="color: var(--text-heading); font-size: 1.15em; border-bottom: 2px solid var(--accent); padding-bottom: 4px; display: inline-block; margin-bottom: 12px;">What gets exported?</strong><br>
+      A properly formatted <strong>Comma Separated Values (.csv)</strong> file using the <em>eBird Record Format</em>.<br>
+      This file contains all detections for your selected date with <strong>&gt;75% confidence</strong>. To comply with eBird guidelines for automated recorders, data is automatically aggregated to a maximum of <strong>1 entry per species per hour</strong>.<br><br>
+      
+      <strong style="color: var(--text-heading); font-size: 1.15em; border-bottom: 2px solid var(--accent); padding-bottom: 4px; display: inline-block; margin-bottom: 12px; margin-top: 8px;">How to upload your data:</strong>
+      <ol style="margin-top: 0; padding-left: 20px;">
+        <li style="margin-bottom: 6px;">Click the button below to generate and download your <code>result_file.csv</code>.</li>
+        <li style="margin-bottom: 6px;">Go to the <a href="https://ebird.org/submit" target="_blank" style="color: var(--accent); font-weight: bold; text-decoration: underline;">eBird Submit Data page</a> and choose <strong>Import Data</strong>.</li>
+        <li style="margin-bottom: 6px;">Select <strong>eBird Record Format (Extended)</strong> as the format.</li>
+        <li style="margin-bottom: 6px;">Upload your <code>.csv</code> file.</li>
+        <li>Review your imported data in the "Cleaning up your imported data" step (you may need to match some species names to eBird's taxonomy, e.g., mapping Feral Pigeons).</li>
+      </ol>
+      
+      <div style="background: #fef9c3; color: #854d0e; padding: 10px 14px; border-radius: 8px; margin-top: 16px; font-size: 0.9em;">
+        <strong>Note:</strong> You cannot bulk upload audio recordings. Media files must be attached manually to their corresponding checklists <em>after</em> they have been imported.
+      </div>
     </div>
     <button type="button" class="ebird-export-trigger" onclick="showDialog()">📥 Export as CSV for eBird</button>
 </div>
