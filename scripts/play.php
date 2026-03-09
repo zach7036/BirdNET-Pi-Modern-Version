@@ -525,8 +525,8 @@ for ($row = 0; $row < $num_rows; $row++) {
         }
         
         .nav-cards-grid {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
+            display: flex;
+            justify-content: space-between;
             gap: 20px;
             margin-bottom: 40px;
         }
@@ -534,7 +534,7 @@ for ($row = 0; $row < $num_rows; $row++) {
             background: var(--bg-card);
             border: 1px solid var(--border);
             border-radius: 16px;
-            padding: 25px;
+            padding: 15px;
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -545,7 +545,9 @@ for ($row = 0; $row < $num_rows; $row++) {
             box-shadow: var(--shadow-sm);
             cursor: pointer;
             border: none;
-            width: 100%;
+            flex: 1 1 0;
+            min-width: 0;
+            word-wrap: break-word;
         }
         .nav-card:hover {
             transform: translateY(-5px);
@@ -554,26 +556,26 @@ for ($row = 0; $row < $num_rows; $row++) {
             background: var(--bg-primary);
         }
         .nav-card-icon {
-            font-size: 2.5em;
-            margin-bottom: 15px;
+            font-size: 2em;
+            margin-bottom: 10px;
             background: var(--accent-subtle);
-            width: 70px;
-            height: 70px;
+            width: 50px;
+            height: 50px;
             display: flex;
             align-items: center;
             justify-content: center;
-            border-radius: 20px;
+            border-radius: 15px;
             float: none;
         }
         .nav-card-title {
-            font-size: 1.3em;
+            font-size: 1.1em;
             font-weight: 800;
-            margin-bottom: 8px;
+            margin-bottom: 5px;
         }
         .nav-card-desc {
-            font-size: 0.9em;
+            font-size: 0.8em;
             color: var(--text-muted);
-            line-height: 1.4;
+            line-height: 1.3;
         }
 
         .recent-section-title {
