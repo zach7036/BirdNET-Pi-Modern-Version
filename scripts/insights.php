@@ -98,8 +98,47 @@ if ($subview == 'migration') {
     $cur_yr = date('Y'); $last_yr = $cur_yr - 1;
     $yoy_res = $db->query("SELECT a.Com_Name, a.Sci_Name, a.first_this_year, b.first_last_year, CAST(julianday(a.first_this_year) - julianday(b.first_last_year_adjusted) AS INTEGER) as day_diff FROM (SELECT Com_Name, Sci_Name, MIN(Date) as first_this_year FROM detections WHERE strftime('%Y', Date) = '$cur_yr' GROUP BY Sci_Name) a INNER JOIN (SELECT Sci_Name, MIN(Date) as first_last_year, '$cur_yr' || substr(MIN(Date), 5) as first_last_year_adjusted FROM detections WHERE strftime('%Y', Date) = '$last_yr' GROUP BY Sci_Name) b ON a.Sci_Name = b.Sci_Name WHERE day_diff != 0 ORDER BY ABS(day_diff) DESC");
     while($row = $yoy_res->fetchArray(SQLITE3_ASSOC)) { $yoy_comparison[] = $row; }
-    $seasonal_res = $db->query("SELECT Com_Name, Sci_Name, SUM(CASE WHEN CAST(strftime('%m', Date) AS INTEGER) = 1 THEN 1 ELSE 0 END) as m1, SUM(CASE WHEN CAST(strftime('%m', Date) AS INTEGER) = 2 THEN 1 ELSE 0 END) as m2, SUM(CASE WHEN CAST(strftime('%m', Date) AS INTEGER) = 3 THEN 1 ELSE 0 END) as m3, SUM(CASE WHEN CAST(strftime('%m', Date) AS INTEGER) = 4 THEN 1 ELSE 0 END) as m4, SUM(CASE WHEN CAST(strftime('%m', Date) AS INTEGER) = 5 THEN 1 ELSE 0 END) as m5, SUM(CASE WHEN CAST(strftime('%m', Date) AS INTEGER) = 6 THEN 1 ELSE 0 END) as m6, SUM(CASE WHEN CAST(strftime('%m', Date) AS INTEGER) = 7 THEN 1 ELSE 0 END) as m7, SUM(CASE WHEN CAST(strftime('%m', Date) AS INTEGER) = 8 THEN 1 ELSE 0 END) as m8, SUM(CASE WHEN CAST(strftime('%m', Date) AS INTEGER) = 9 THEN 1 ELSE 0 END) as m9, SUM(CASE WHEN CAST(strftime('%m', Date) AS INTEGER) = 10 THEN 1 ELSE 0 END) as m10, SUM(CASE WHEN CAST(strftime('%m', Date) AS INTEGER) = 11 THEN 1 ELSE 0 END) as m11, SUM(CASE WHEN CAST(strftime('%m', Date) AS INTEGER) = 12 THEN 1 ELSE 0 END) as m12, COUNT(*) as total FROM detections GROUP BY Sci_Name ORDER BY total DESC LIMIT 8");
-    while($row = $seasonal_res->fetchArray(SQLITE3_ASSOC)) { $ma = 0; for ($i=1;$i<=12;$i++) if ($row['m'.$i]>0) $ma++; $row['months_active'] = $ma; $row['status'] = $ma >= 10 ? 'Year-round' : ($ma >= 5 ? 'Seasonal' : 'Transient'); $seasonal_top[] = $row; }
+    // Generate 48-segment SQL (4 per month)
+    $sql_segments = [];
+    for ($m = 1; $m <= 12; $m++) {
+        $sql_segments[] = "SUM(CASE WHEN CAST(strftime('%m', Date) AS INTEGER) = $m AND CAST(strftime('%d', Date) AS INTEGER) <= 7 THEN 1 ELSE 0 END) as s" . (($m-1)*4 + 1);
+        $sql_segments[] = "SUM(CASE WHEN CAST(strftime('%m', Date) AS INTEGER) = $m AND CAST(strftime('%d', Date) AS INTEGER) BETWEEN 8 AND 14 THEN 1 ELSE 0 END) as s" . (($m-1)*4 + 2);
+        $sql_segments[] = "SUM(CASE WHEN CAST(strftime('%m', Date) AS INTEGER) = $m AND CAST(strftime('%d', Date) AS INTEGER) BETWEEN 15 AND 21 THEN 1 ELSE 0 END) as s" . (($m-1)*4 + 3);
+        $sql_segments[] = "SUM(CASE WHEN CAST(strftime('%m', Date) AS INTEGER) = $m AND CAST(strftime('%d', Date) AS INTEGER) > 21 THEN 1 ELSE 0 END) as s" . (($m-1)*4 + 4);
+    }
+    $seasonal_res = $db->query("SELECT Com_Name, Sci_Name, " . implode(", ", $sql_segments) . ", COUNT(*) as total FROM detections GROUP BY Sci_Name ORDER BY total DESC");
+    
+    $seasonal_scis = [];
+    $raw_seasonal = [];
+    while($row = $seasonal_res->fetchArray(SQLITE3_ASSOC)) {
+        $seasonal_scis[] = $row['Sci_Name'];
+        $raw_seasonal[] = $row;
+    }
+    
+    // Fetch expected frequencies from Python helper
+    $expected_freqs = [];
+    if (!empty($seasonal_scis)) {
+        $sci_str = implode(',', $seasonal_scis);
+        $cmd = "python3 scripts/get_seasonal_expected.py " . escapeshellarg($sci_str);
+        $output = shell_exec($cmd);
+        $expected_freqs = json_decode($output, true) ?: [];
+    }
+
+    foreach($raw_seasonal as $row) {
+        $active_segments = 0;
+        $segments_data = [];
+        for ($i=1; $i<=48; $i++) {
+            $val = $row['s'.$i];
+            if ($val > 0) $active_segments++;
+            $segments_data[] = $val;
+        }
+        $row['segments_active'] = $active_segments;
+        // status based on portion of year present
+        $row['status'] = $active_segments >= 36 ? 'Year-round' : ($active_segments >= 12 ? 'Seasonal' : 'Transient');
+        $row['actual_segments'] = $segments_data;
+        $row['expected_segments'] = isset($expected_freqs[$row['Sci_Name']]) ? $expected_freqs[$row['Sci_Name']] : array_fill(0, 48, 0.0);
+        $seasonal_top[] = $row;
+    }
     $monthly_res = $db->query("SELECT strftime('%Y-%m', Date) as month, COUNT(DISTINCT Sci_Name) as diversity, COUNT(*) as detections FROM detections GROUP BY month ORDER BY month ASC LIMIT 24");
     while($row = $monthly_res->fetchArray(SQLITE3_ASSOC)) { $monthly_stats[] = $row; }
     $month_labels = json_encode(array_map(function($r) { return $r['month']; }, $monthly_stats));
@@ -372,6 +411,55 @@ $db->close();
     .info-btn:hover .info-tooltip {
         opacity: 1;
         bottom: 140%;
+    }
+    
+    /* Seasonal Bar Charts */
+    .seasonal-bars-container {
+        display: flex;
+        gap: 2px;
+        align-items: flex-end;
+        height: 32px;
+        background: var(--bg-primary);
+        padding: 4px 6px;
+        border-radius: 8px;
+        border: 1px solid var(--border-light);
+        flex: 1 1 320px;
+        min-width: 280px;
+        position: relative;
+    }
+    .seasonal-bar-wrap {
+        flex: 1;
+        height: 100%;
+        display: flex;
+        align-items: flex-end;
+        position: relative;
+    }
+    .seasonal-bar-expected {
+        width: 100%;
+        background: var(--text-muted);
+        opacity: 0.15;
+        border-radius: 1px;
+        transition: height 0.3s ease;
+    }
+    .seasonal-bar-actual {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        background: var(--accent);
+        height: 4px; /* Default height if detected */
+        border-radius: 1px;
+        opacity: 0;
+        transition: opacity 0.2s ease;
+    }
+    .seasonal-bar-actual.detected {
+        opacity: 1;
+    }
+    .seasonal-month-divider {
+        width: 1px;
+        height: 100%;
+        background: var(--border);
+        margin: 0 1px;
     }
     @media (max-width: 768px) {
         .info-tooltip {
@@ -767,7 +855,7 @@ $db->close();
 
     <!-- Seasonal Presence -->
     <section class="insights-section" style="margin-top: 30px;">
-        <div class="insights-section-title">🗓️ Seasonal Presence (Top Species) <span class="info-btn">ⓘ<span class="info-tooltip" style="width: 280px;">Analysis of monthly activity to classify species. <strong>Note:</strong> Classifications may be inaccurate if your station has been active for less than a full year.<br><br>• <strong>Year-round</strong>: Seen most months.<br>• <strong>Seasonal</strong>: Migratory visitors.<br>• <strong>Transient</strong>: Passing through briefly.</span></span></div>
+        <div class="insights-section-title">🗓️ Seasonal Presence <span class="info-btn">ⓘ<span class="info-tooltip" style="width: 280px;">High-resolution analysis of activity (4 segments per month).<br><br>The <strong>height</strong> of each bar represents regional commonness from the BirdNET model. <br><br><strong>Blue highlights</strong> show when the bird was actually detected at your station.</span></span></div>
         <div class="insights-stats-list">
             <?php if(empty($seasonal_top)): ?>
             <div class="insights-stats-item">
@@ -777,31 +865,51 @@ $db->close();
             <?php else: ?>
             <?php
                 $status_colors = ['Year-round' => '#10b981', 'Seasonal' => '#f59e0b', 'Transient' => '#ef4444'];
-                $months_short = ['J','F','M','A','M','J','J','A','S','O','N','D'];
             ?>
-            <?php foreach($seasonal_top as $s): ?>
-            <div class="insights-stats-item" style="flex-wrap: wrap; gap: 8px;">
-                <div style="flex: 1 1 200px;">
-                    <div class="insights-stats-name" style="margin-bottom: 2px;"><?php echo $s['Com_Name']; ?></div>
-                    <div style="font-size: 0.8em; color: var(--text-muted);">
-                        <?php echo $s['months_active']; ?>/12 months ·
+            <?php $rank_s = 1; foreach($seasonal_top as $s): ?>
+            <div class="insights-stats-item <?php echo $rank_s > 10 ? 'hidden-item' : ''; ?>" style="flex-wrap: wrap; gap: 12px; padding: 16px 20px;">
+                <div style="flex: 1 1 220px;">
+                    <div class="insights-stats-name" style="margin-bottom: 4px; font-size: 1.05em;"><?php echo $s['Com_Name']; ?></div>
+                    <div style="font-size: 0.85em; color: var(--text-muted);">
+                        <span style="display: inline-block; padding: 2px 8px; background: var(--bg-card); border-radius: 10px; border: 1px solid var(--border-light); margin-right: 8px;"><?php echo number_format($s['total']); ?> detections</span>
                         <span style="color: <?php echo $status_colors[$s['status']]; ?>; font-weight: 700;"><?php echo $s['status']; ?></span>
                     </div>
                 </div>
-                <div style="display: flex; gap: 2px; align-items: center;">
-                    <?php for ($i = 1; $i <= 12; $i++): ?>
-                    <div title="<?php echo date('F', mktime(0,0,0,$i,1)); ?>: <?php echo $s['m'.$i]; ?>" style="
-                        width: 18px; height: 24px; border-radius: 3px; text-align: center; line-height: 24px; font-size: 0.65em; font-weight: 600;
-                        background: <?php echo $s['m'.$i] > 0 ? 'var(--accent)' : 'var(--bg-primary)'; ?>;
-                        color: <?php echo $s['m'.$i] > 0 ? '#fff' : 'var(--text-muted)'; ?>;
-                        border: 1px solid <?php echo $s['m'.$i] > 0 ? 'transparent' : 'var(--border-light)'; ?>;
-                    "><?php echo $months_short[$i-1]; ?></div>
+                <div class="seasonal-bars-container">
+                    <?php 
+                        $months_names = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+                        for ($i = 0; $i < 48; $i++): 
+                    ?>
+                        <?php if ($i > 0 && $i % 4 == 0): ?>
+                            <div class="seasonal-month-divider"></div>
+                        <?php endif; ?>
+                        
+                        <?php 
+                            $expected = $s['expected_segments'][$i];
+                            $actual = $s['actual_segments'][$i];
+                            $month_idx = floor($i / 4);
+                            $week_in_month = ($i % 4) + 1;
+                            $tooltip = $months_names[$month_idx] . " (Seg $week_in_month): " . ($actual > 0 ? $actual . " detections" : "Expected frequency: " . round($expected * 100, 1) . "%");
+                        ?>
+                        <div class="seasonal-bar-wrap" title="<?php echo $tooltip; ?>">
+                            <div class="seasonal-bar-expected" style="height: <?php echo max(5, $expected * 100); ?>%;"></div>
+                            <div class="seasonal-bar-actual <?php echo $actual > 0 ? 'detected' : ''; ?>"></div>
+                        </div>
                     <?php endfor; ?>
                 </div>
             </div>
-            <?php endforeach; ?>
+            <?php $rank_s++; endforeach; ?>
             <?php endif; ?>
         </div>
+        <?php if(count($seasonal_top) > 10): ?>
+        <button class="show-list-btn" 
+                onclick="toggleItems(this)" 
+                data-expanded="false" 
+                data-show-text="Show all <?php echo count($seasonal_top); ?> detected species ↓" 
+                data-hide-text="Show top 10 species ↑">
+            Show all <?php echo count($seasonal_top); ?> detected species ↓
+        </button>
+        <?php endif; ?>
     </section>
     <?php endif; ?>
 
