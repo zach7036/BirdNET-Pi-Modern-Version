@@ -438,7 +438,7 @@ $db->close();
     .seasonal-bar-expected {
         width: 100%;
         background: var(--text-muted);
-        opacity: 0.45; /* Increased opacity for better visibility */
+        opacity: 0.25; /* Highly subtle for baseline effect */
         border-radius: 1px;
         transition: height 0.3s ease;
     }
@@ -914,7 +914,7 @@ $db->close();
                                 $tooltip = $months_names[$month_idx] . " (Seg $week_in_month): " . ($actual > 0 ? $actual . " detections" : "Expected frequency: " . round($expected * 100, 1) . "%");
                             ?>
                             <div class="seasonal-bar-wrap" title="<?php echo $tooltip; ?>">
-                                <div class="seasonal-bar-expected" style="height: <?php echo max(5, $expected * 50); ?>%;"></div>
+                                <div class="seasonal-bar-expected" style="height: <?php echo max(5, $expected * 20); ?>%;"></div>
                                 <div class="seasonal-bar-actual <?php echo $actual > 0 ? 'detected' : ''; ?>"></div>
                             </div>
                         <?php endfor; ?>
