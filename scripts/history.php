@@ -144,17 +144,17 @@ if (get_included_files()[0] === __FILE__) {
 .ebird-btn-submit {
   flex: 1;
   padding: 12px;
-  border: none;
+  border: none !important;
   border-radius: 10px;
-  background: var(--accent, #6366f1);
-  color: white;
+  background: #6366f1 !important;
+  color: white !important;
   font-size: 1em;
   font-weight: 600;
   cursor: pointer;
   font-family: inherit;
   transition: all 0.2s ease;
 }
-.ebird-btn-submit:hover { background: #4f46e5; transform: translateY(-1px); }
+.ebird-btn-submit:hover { background: #4f46e5 !important; color: white !important; transform: translateY(-1px); }
 .ebird-btn-cancel {
   padding: 12px 20px;
   border: 1px solid var(--border, #e2e8f0);
