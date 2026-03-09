@@ -130,6 +130,7 @@ if (get_included_files()[0] === __FILE__) {
    }
 </style>
 
+<?php if(!isset($_GET['species'])): ?>
 <div class="sticky-sort-bar-stats">
    <form action="views.php" method="GET" class="sort-options-stats">
       <input type="hidden" name="view" value="Species Stats">
@@ -184,6 +185,7 @@ if (get_included_files()[0] === __FILE__) {
 </div>
 </form>
 </div>
+<?php endif; ?>
 <dialog style="margin-top: 5px;max-height: 95vh;
   overflow-y: auto;overscroll-behavior:contain" id="attribution-dialog">
   <h1 id="modalHeading"></h1>
