@@ -419,13 +419,13 @@ $db->close();
         display: flex;
         gap: 2px;
         align-items: flex-end;
-        height: 28px; /* Reduced from 32px */
+        height: 32px;
         background: var(--bg-primary);
         padding: 4px 6px;
         border-radius: 8px;
         border: 1px solid var(--border-light);
-        flex: 1 1 280px; /* Reduced basis */
-        max-width: 400px;
+        flex: 1 1 320px;
+        min-width: 280px;
         position: relative;
     }
     .seasonal-bar-wrap {
@@ -467,13 +467,13 @@ $db->close();
     .seasonal-month-labels {
         display: flex;
         gap: 2px;
-        margin-top: 2px; /* Reduced from 4px */
+        margin-top: 4px;
         padding: 0 6px;
     }
     .seasonal-month-label {
         flex: 1;
         text-align: center;
-        font-size: 0.55em; /* Slightly smaller */
+        font-size: 0.6em;
         font-weight: 700;
         color: var(--text-muted);
         text-transform: uppercase;
@@ -888,7 +888,7 @@ $db->close();
                 $status_colors = ['Year-round' => '#10b981', 'Seasonal' => '#f59e0b', 'Transient' => '#ef4444'];
             ?>
             <?php $rank_s = 1; foreach($seasonal_top as $s): ?>
-            <div class="insights-stats-item <?php echo $rank_s > 10 ? 'hidden-item' : ''; ?>" style="flex-wrap: wrap; gap: 12px; padding: 10px 18px; align-items: center;">
+            <div class="insights-stats-item <?php echo $rank_s > 10 ? 'hidden-item' : ''; ?>" style="flex-wrap: wrap; gap: 12px; padding: 16px 20px;">
                 <div style="flex: 1 1 220px;">
                     <div class="insights-stats-name" style="margin-bottom: 4px; font-size: 1.05em;"><?php echo $s['Com_Name']; ?></div>
                     <div style="font-size: 0.85em; color: var(--text-muted);">
