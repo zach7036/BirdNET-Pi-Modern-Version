@@ -81,7 +81,7 @@ if (get_included_files()[0] === __FILE__) {
   box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25);
   max-width: 480px;
   width: 90%;
-  overflow: hidden;
+  overflow: visible;
   background: var(--bg-card, #fff);
 }
 #attribution-dialog::backdrop {
@@ -95,6 +95,8 @@ if (get_included_files()[0] === __FILE__) {
   font-size: 1.2em;
   font-weight: 700;
   margin: 0;
+  border-top-left-radius: 16px;
+  border-top-right-radius: 16px;
 }
 .ebird-dialog-body {
   padding: 24px;
