@@ -195,10 +195,10 @@ if (get_included_files()[0] === __FILE__) {
   align-items: center;
   gap: 8px;
   padding: 12px 24px;
-  border: none;
+  border: none !important;
   border-radius: 12px;
-  background: #6366f1;
-  color: white;
+  background: #6366f1 !important;
+  color: white !important;
   font-size: 1em;
   font-weight: 600;
   cursor: pointer;
@@ -206,7 +206,7 @@ if (get_included_files()[0] === __FILE__) {
   transition: all 0.2s ease;
   box-shadow: 0 4px 6px -1px rgba(99,102,241,0.3);
 }
-.ebird-export-trigger:hover { background: #4f46e5; transform: translateY(-2px); box-shadow: 0 8px 15px -3px rgba(99,102,241,0.4); }
+.ebird-export-trigger:hover { background: #4f46e5 !important; color: white !important; transform: translateY(-2px); box-shadow: 0 8px 15px -3px rgba(99,102,241,0.4); }
 </style>
 
 <script src="static/dialog-polyfill.js"></script>
