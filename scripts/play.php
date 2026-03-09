@@ -477,6 +477,47 @@ if(!isset($_GET['species']) && !isset($_GET['filename'])){
        border-radius: 8px;
        background: var(--accent-subtle);
        color: var(--accent);
+   .date-grid {
+       display: grid;
+       grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+       gap: 15px;
+       padding: 20px 10px 40px 10px;
+       max-width: 1200px;
+       margin: 0 auto;
+   }
+   .date-card {
+       background: var(--bg-card);
+       border: 1px solid var(--border);
+       border-radius: 12px;
+       padding: 15px 20px;
+       display: flex;
+       align-items: center;
+       gap: 12px;
+       text-decoration: none;
+       color: var(--text-heading);
+       transition: all 0.2s ease;
+       box-shadow: var(--shadow-sm);
+       cursor: pointer;
+       font-weight: 600;
+       font-size: 1.1em;
+   }
+   .date-card:hover {
+       transform: translateY(-3px);
+       box-shadow: var(--shadow-md);
+       border-color: var(--accent);
+   }
+   .date-card.today {
+       background: var(--accent-subtle);
+       border-color: var(--accent);
+       color: var(--accent);
+   }
+   .date-card.today:hover {
+       background: var(--accent);
+       color: white;
+   }
+   .date-icon {
+       font-size: 1.2em;
+       opacity: 0.8;
    }
 </style>
 
@@ -513,11 +554,28 @@ if(!isset($_GET['species']) && !isset($_GET['filename'])){
 <?php
   #By Date
   if($view == "bydate") {
+    // Close the table if one is open from the previous condition flow
+    if ($view != "choose") { echo "</table>"; }
+    
+    echo "<div class='date-grid'>";
     while($results=$result->fetchArray(SQLITE3_ASSOC)){
       $date = $results['Date'];
       if(realpath($home."/BirdSongs/Extracted/By_Date/".$date) !== false){
-        echo "<td>
-          <button action=\"submit\" name=\"date\" value=\"$date\">".($date == date('Y-m-d') ? "Today" : $date)."</button></td></tr>";}}
+        $is_today = ($date == date('Y-m-d'));
+        $display_text = $is_today ? "Today" : $date;
+        $card_class = $is_today ? "date-card today" : "date-card";
+        
+        echo "<a href=\"views.php?view=Recordings&date={$date}\" class=\"{$card_class}\">";
+        echo "<span class=\"date-icon\">📅</span>";
+        echo "<span>{$display_text}</span>";
+        echo "</a>";
+      }
+    }
+    echo "</div>";
+    
+    // Resume arbitrary tag structure to prevent breaking the final if condition
+    if ($view != "choose") { echo "<table>"; }
+    
 
           #By Species
   } elseif($view == "byspecies") {
