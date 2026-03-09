@@ -218,28 +218,28 @@ if (get_included_files()[0] === __FILE__) {
   <div class="ebird-dialog-body">
     <div class="ebird-row">
       <div class="ebird-field">
-        <label>Export Date</label>
-        <input type="date" id="export_date" value="<?php echo $theDate; ?>">
+        <label>Export Date <span style="color:red">*</span></label>
+        <input type="date" id="export_date" value="<?php echo $theDate; ?>" required>
       </div>
       <div class="ebird-field">
-        <label>Location Name</label>
-        <input placeholder="e.g. My backyard" id="blocation">
-      </div>
-    </div>
-    <div class="ebird-row">
-      <div class="ebird-field">
-        <label>State Code <span style="font-weight: normal; font-size: 0.85em; color: var(--text-muted);">(1-3 letters, e.g., OH)</span></label>
-        <input type="text" maxlength="3" pattern="[A-Za-z]{1,3}" style="text-transform: uppercase;" placeholder="e.g. OH" id="state" oninput="this.value = this.value.toUpperCase()">
-      </div>
-      <div class="ebird-field">
-        <label>Country Code <span style="font-weight: normal; font-size: 0.85em; color: var(--text-muted);">(Exactly 2 letters, e.g., US)</span></label>
-        <input type="text" maxlength="2" minlength="2" pattern="[A-Za-z]{2}" style="text-transform: uppercase;" placeholder="e.g. US" id="country" oninput="this.value = this.value.toUpperCase()">
+        <label>Location Name <span style="color:red">*</span></label>
+        <input placeholder="e.g. My backyard" id="blocation" required>
       </div>
     </div>
     <div class="ebird-row">
       <div class="ebird-field">
-        <label>Protocol</label>
-        <select id="protocol">
+        <label>State Code <span style="color:red">*</span> <span style="font-weight: normal; font-size: 0.85em; color: var(--text-muted);">(1-3 letters, e.g., OH)</span></label>
+        <input type="text" maxlength="3" pattern="[A-Za-z]{1,3}" style="text-transform: uppercase;" placeholder="e.g. OH" id="state" oninput="this.value = this.value.toUpperCase()" required>
+      </div>
+      <div class="ebird-field">
+        <label>Country Code <span style="color:red">*</span> <span style="font-weight: normal; font-size: 0.85em; color: var(--text-muted);">(Exactly 2 letters, e.g., US)</span></label>
+        <input type="text" maxlength="2" minlength="2" pattern="[A-Za-z]{2}" style="text-transform: uppercase;" placeholder="e.g. US" id="country" oninput="this.value = this.value.toUpperCase()" required>
+      </div>
+    </div>
+    <div class="ebird-row">
+      <div class="ebird-field">
+        <label>Protocol <span style="color:red">*</span></label>
+        <select id="protocol" required>
           <option value="casual">Casual</option>
           <option value="stationary">Stationary</option>
           <option value="traveling">Traveling</option>
@@ -247,8 +247,8 @@ if (get_included_files()[0] === __FILE__) {
         </select>
       </div>
       <div class="ebird-field">
-        <label>Observers</label>
-        <input type="number" placeholder="1" id="num_observers">
+        <label>Observers <span style="color:red">*</span></label>
+        <input type="number" placeholder="1" id="num_observers" value="1" required>
       </div>
     </div>
     <div class="ebird-field">
@@ -278,14 +278,29 @@ function closeDialog() {
 }
 
 function submitID() {
-  blocation = document.getElementById("blocation").value;
-  state = document.getElementById("state").value;
-  country = document.getElementById("country").value;
-  protocol = document.getElementById("protocol").value;
-  num_observers = document.getElementById("num_observers").value;
-  dist_traveled = document.getElementById("dist_traveled").value;
-  notes = document.getElementById("notes").value;
-  export_date = document.getElementById("export_date").value;
+  var blocation = document.getElementById("blocation").value.trim();
+  var state = document.getElementById("state").value.trim();
+  var country = document.getElementById("country").value.trim();
+  var protocol = document.getElementById("protocol").value;
+  var num_observers = document.getElementById("num_observers").value;
+  var dist_traveled = document.getElementById("dist_traveled").value;
+  var notes = document.getElementById("notes").value;
+  var export_date = document.getElementById("export_date").value;
+
+  if (!blocation || !state || !country || !num_observers || !export_date) {
+      alert("Please fill out all required fields (marked with an asterisk).");
+      return;
+  }
+  
+  if (country.length !== 2) {
+      alert("Country Code must be exactly 2 letters.");
+      return;
+  }
+
+  if (protocol === "traveling" && !dist_traveled) {
+      alert("Distance Traveled is required for the Traveling protocol.");
+      return;
+  }
 
   window.open("history.php?blocation="+blocation+"&state="+state+"&country="+country+"&protocol="+protocol+"&num_observers="+num_observers+"&dist_traveled="+dist_traveled+"&notes="+notes+"&date="+export_date);
 
