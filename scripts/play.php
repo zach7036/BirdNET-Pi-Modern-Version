@@ -547,15 +547,12 @@ if(!isset($_GET['species']) && !isset($_GET['filename'])){
 <br>
 <?php } ?>
 <?php if ($view != "choose") { ?>
-<table>
 <form action="views.php" method="GET">
 <input type="hidden" name="view" value="Recordings">
 <?php } ?>
 <?php
   #By Date
   if($view == "bydate") {
-    // Close the table if one is open from the previous condition flow
-    if ($view != "choose") { echo "</table>"; }
     
     echo "<div class='date-grid'>";
     while($results=$result->fetchArray(SQLITE3_ASSOC)){
@@ -574,7 +571,7 @@ if(!isset($_GET['species']) && !isset($_GET['filename'])){
     echo "</div>";
     
     // Resume arbitrary tag structure to prevent breaking the final if condition
-    if ($view != "choose") { echo "<form action=\"views.php\" method=\"GET\"><table>"; }
+    if ($view != "choose") { echo "</form>"; }
     
 
           #By Species
@@ -587,8 +584,7 @@ if(!isset($_GET['species']) && !isset($_GET['filename'])){
       $values[] = get_label($results, $_GET['sort']);
     }
 
-    // Close the table if one is open from the previous condition flow, we don't want it here.
-    if ($view != "choose") { echo "</table>"; }
+    if ($view != "choose") { echo "<table>"; }
     
     echo "<div class='species-grid'>";
     for ($index = 0; $index < count($birds); $index++) {
