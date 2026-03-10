@@ -2038,7 +2038,7 @@ ul.navbar-nav {
 /* Dark-specific hardcoded overrides */
 [data-theme="dark"] .mobile-header .icon img { filter: invert(1); }
 [data-theme="dark"] .banner { border-bottom-color: var(--border); }
-[data-theme="dark"] .topimage { filter: brightness(0) invert(1) brightness(0.85); }
+[data-theme="dark"] .topimage, [data-theme="dark"] .sidebar-logo img { filter: invert(1) hue-rotate(180deg); }
 [data-theme="dark"] .kpi-card-highlight { background: linear-gradient(135deg, #2a2215 0%, #332a18 100%); border-color: rgba(217, 119, 6, 0.3); }
 [data-theme="dark"] .kpi-card-highlight .kpi-value { color: #fbbf24; }
 [data-theme="dark"] .sortbutton { color: #0f1419; }
