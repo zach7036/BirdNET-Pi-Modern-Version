@@ -195,13 +195,20 @@ elseif ($config["LONGITUDE"] == "0.000") {
     <button type="submit" name="view" value="Spectrogram" form="views" onclick="document.getElementById('sidebar_subview').value='';">📊 <span>Spectrogram</span></button>
     <button type="submit" name="view" value="View Log" form="views" onclick="document.getElementById('sidebar_subview').value='';">📝 <span>Log</span></button>
     <button type="submit" name="view" value="Tools" form="views" onclick="document.getElementById('sidebar_subview').value='';">⚙️ <span>Tools</span><?php if(isset($_SESSION['behind']) && intval($_SESSION['behind']) >= 50 && ($config['SILENCE_UPDATE_INDICATOR'] != 1)){ $updatediv = ' <div class="updatenumber">'.$_SESSION["behind"].'</div>'; } else { $updatediv = ""; } echo $updatediv; ?></button>
-    <button type="button" id="themeToggleBtn" onclick="toggleTheme()">🌗 <span>Theme</span></button>
+    <button type="button" id="themeToggleBtn" onclick="toggleTheme()"><span id="theme-toggle-icon">🌗</span> <span>Theme</span></button>
     <script>
       // Dropdown Toggle Logic
       document.addEventListener('DOMContentLoaded', function() {
         const dropdown = document.querySelector('.sidebar-dropdown');
         const toggle = dropdown.querySelector('.sidebar-dropdown-toggle');
         const urlParams = new URLSearchParams(window.location.search);
+        
+        // Initialize Theme Toggle Icon
+        const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+        const themeIcon = document.getElementById('theme-toggle-icon');
+        if (themeIcon) {
+          themeIcon.innerText = isDark ? '☀️' : '🌙';
+        }
         
         // Toggle on click
         toggle.addEventListener('click', function(e) {
@@ -227,6 +234,12 @@ elseif ($config["LONGITUDE"] == "0.000") {
         // Update local localStorage and document
         localStorage.setItem('birdnet-theme', newTheme);
         document.documentElement.setAttribute('data-theme', newTheme);
+        
+        // Update icon
+        const themeIcon = document.getElementById('theme-toggle-icon');
+        if (themeIcon) {
+          themeIcon.innerText = newTheme === 'dark' ? '☀️' : '🌙';
+        }
         
         // If this page is inside top index.php iframe, update the parent as well
         if (window.top !== window.self) {
