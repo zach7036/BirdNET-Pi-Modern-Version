@@ -16,15 +16,6 @@ This repository is an enhanced, fully modernized version of BirdNET-Pi, built on
 This version introduces a complete overhaul of the user interface to bring the system inline with modern web design standards, along with highly requested functional improvements.
 
 Note: see 'Migrating from previous forks' on how to migrate from Nachtzuster.
-## New to Coding? Use Claude AI
-If you're new to coding and/or this project feels overwhelming, simply copy these prompts into [Claude](https://claude.ai) and it will walk you through exactly what to do and how to do it. And if you have any questions or issues, simply ask Claude and it will be able to troubleshoot it for you and provide you the next steps on what to do.
-
-First, paste this prompt into Claude:
-> Analyze this GitHub project. Give me a full and detailed breakdown and overview of all of it. https://github.com/zach7036/BirdNET-Pi-Modern-Version.git
-
-After Claude responds, paste this second prompt (be sure to replace the bracketed text with your own exact hardware):
-> Give me a detailed step by step guide on how to set everything up. I have a [Raspberry Pi 5] and the [MAONO USB Lavalier Microphone, 192KHZ/24BIT Plug & Play].
-
 ## Introduction
 BirdNET-Pi is built on the [BirdNET framework](https://github.com/kahst/BirdNET-Analyzer) by [**@kahst**](https://github.com/kahst) <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/"><img src="https://img.shields.io/badge/License-CC%20BY--NC--SA%204.0-lightgrey.svg"></a> using [pre-built TFLite binaries](https://github.com/PINTO0309/TensorflowLite-bin) by [**@PINTO0309**](https://github.com/PINTO0309) . It is able to recognize bird sounds from a USB microphone or sound card in realtime and share its data with the rest of the world.
 
@@ -123,6 +114,15 @@ The system can be installed with a single command designed for a fresh OS instal
 curl -s https://raw.githubusercontent.com/zach7036/BirdNET-Pi-Modern-Version/main/newinstaller.sh | bash
 ```
 The installer takes care of any and all necessary updates, so you can run that as the very first command upon the first boot. The installation creates a log in `$HOME/installation-$(date "+%F").txt`.
+
+## New to Coding? Use Claude AI
+If you're new to coding and/or this project feels overwhelming, simply copy these prompts into [Claude](https://claude.ai) and it will walk you through exactly what to do and how to do it. And if you have any questions or issues, simply ask Claude and it will be able to troubleshoot it for you and provide you the next steps on what to do.
+
+First, paste this prompt into Claude:
+> Analyze this GitHub project. Give me a full and detailed breakdown and overview of all of it. https://github.com/zach7036/BirdNET-Pi-Modern-Version.git
+
+After Claude responds, paste this second prompt (be sure to replace the bracketed text with your own exact hardware):
+> Give me a detailed step by step guide on how to set everything up. I have a [Raspberry Pi 5] and the [MAONO USB Lavalier Microphone, 192KHZ/24BIT Plug & Play].
 
 ## Access
 The BirdNET-Pi can be accessed from any web browser on the same network:
