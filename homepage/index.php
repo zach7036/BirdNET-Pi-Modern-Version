@@ -23,6 +23,11 @@ if (isset($_GET['view']) && is_protected_view($_GET['view'])) {
 <!DOCTYPE html>
 <html lang="en">
 <head>
+<script>
+  if (localStorage.getItem('birdnet-theme') === 'dark') {
+    document.documentElement.setAttribute('data-theme', 'dark');
+  }
+</script>
 <title><?php echo $site_name; ?></title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="description" content="BirdNET-Pi - Bird sound identification and monitoring dashboard">

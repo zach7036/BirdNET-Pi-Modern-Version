@@ -1995,4 +1995,59 @@ ul.navbar-nav {
     /* Give background so it doesn't overlap text */
     border-bottom: 1px solid var(--border);
   }
+}/* ===== Dark Mode Theme Overrides ===== */
+[data-theme="dark"] {
+  --bg-primary: #0f1419;
+  --bg-secondary: #1a1f2e;
+  --bg-card: #1e2433;
+  --bg-nav: #0d1117;
+  --bg-banner: #161b22;
+  --bg-table-header: #151b28;
+  --bg-table-row: #1e2433;
+  --bg-table-row-alt: #232a3b;
+  --bg-button: #1e2433;
+  --bg-button-hover: #243044;
+
+  --text-primary: #c9d1d9;
+  --text-secondary: #8b949e;
+  --text-muted: #6e7681;
+  --text-on-dark: #c9d1d9;
+  --text-on-dark-muted: #8b949e;
+  --text-heading: #e6edf3;
+
+  --accent: #2dd4bf;
+  --accent-hover: #5eead4;
+  --accent-light: rgba(45, 212, 191, 0.1);
+  --accent-subtle: rgba(45, 212, 191, 0.06);
+
+  --border: #30363d;
+  --border-light: #21262d;
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
+  --shadow: 0 1px 3px rgba(0, 0, 0, 0.4), 0 1px 2px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.3), 0 2px 4px rgba(0, 0, 0, 0.25);
+  --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.35), 0 4px 6px rgba(0, 0, 0, 0.25);
+
+  --link: #2dd4bf;
+  --link-hover: #5eead4;
+
+  --success: #34d399;
+  --warning: #fbbf24;
+  --danger: #f87171;
 }
+
+/* Dark-specific hardcoded overrides */
+[data-theme="dark"] .mobile-header .icon img { filter: invert(1); }
+[data-theme="dark"] .banner { border-bottom-color: var(--border); }
+[data-theme="dark"] .topimage { filter: brightness(0) invert(1) brightness(0.85); }
+[data-theme="dark"] .kpi-card-highlight { background: linear-gradient(135deg, #2a2215 0%, #332a18 100%); border-color: rgba(217, 119, 6, 0.3); }
+[data-theme="dark"] .kpi-card-highlight .kpi-value { color: #fbbf24; }
+[data-theme="dark"] .sortbutton { color: #0f1419; }
+[data-theme="dark"] .sortbutton:hover, [data-theme="dark"] .sortbutton.active { color: #0f1419; }
+[data-theme="dark"] .brbanner { color: #0f1419; }
+[data-theme="dark"] input, [data-theme="dark"] textarea { background-color: var(--bg-card); color: var(--text-primary); border: 1px solid var(--border); }
+[data-theme="dark"] select { background-color: var(--bg-card); color: var(--text-primary); }
+[data-theme="dark"] dialog { background-color: var(--bg-card); color: var(--text-primary); }
+[data-theme="dark"] pre.bash { background-color: #0d1117; color: var(--text-primary); }
+[data-theme="dark"] #showpassword, [data-theme="dark"] #newrtspstream { background-color: var(--bg-card); color: var(--text-primary); }
+[data-theme="dark"] .exclude_species_list_option_highlight { color: var(--text-heading); background-color: var(--accent-light); }
+[data-theme="dark"] .testbtn { background: var(--bg-card) !important; color: var(--text-primary); }

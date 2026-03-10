@@ -52,6 +52,11 @@ elseif ($config["LONGITUDE"] == "0.000") {
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <script>
+    if (localStorage.getItem('birdnet-theme') === 'dark') {
+      document.documentElement.setAttribute('data-theme', 'dark');
+    }
+  </script>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>BirdNET-Pi DB</title>
@@ -190,6 +195,7 @@ elseif ($config["LONGITUDE"] == "0.000") {
     <button type="submit" name="view" value="Spectrogram" form="views" onclick="document.getElementById('sidebar_subview').value='';">📊 <span>Spectrogram</span></button>
     <button type="submit" name="view" value="View Log" form="views" onclick="document.getElementById('sidebar_subview').value='';">📝 <span>Log</span></button>
     <button type="submit" name="view" value="Tools" form="views" onclick="document.getElementById('sidebar_subview').value='';">⚙️ <span>Tools</span><?php if(isset($_SESSION['behind']) && intval($_SESSION['behind']) >= 50 && ($config['SILENCE_UPDATE_INDICATOR'] != 1)){ $updatediv = ' <div class="updatenumber">'.$_SESSION["behind"].'</div>'; } else { $updatediv = ""; } echo $updatediv; ?></button>
+    <button type="button" id="themeToggleBtn" onclick="toggleTheme()">🌗 <span>Theme</span></button>
     <script>
       // Dropdown Toggle Logic
       document.addEventListener('DOMContentLoaded', function() {
@@ -212,6 +218,21 @@ elseif ($config["LONGITUDE"] == "0.000") {
           if (subBtn) subBtn.classList.add('active');
         }
       });
+
+      // Dark Mode Toggle Logic
+      function toggleTheme() {
+        const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+        const newTheme = isDark ? 'light' : 'dark';
+        
+        // Update local localStorage and document
+        localStorage.setItem('birdnet-theme', newTheme);
+        document.documentElement.setAttribute('data-theme', newTheme);
+        
+        // If this page is inside top index.php iframe, update the parent as well
+        if (window.top !== window.self) {
+          window.top.document.documentElement.setAttribute('data-theme', newTheme);
+        }
+      }
     </script>
   </div>
 </form>
