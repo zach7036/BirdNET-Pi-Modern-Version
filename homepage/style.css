@@ -2051,3 +2051,4 @@ ul.navbar-nav {
 [data-theme="dark"] #showpassword, [data-theme="dark"] #newrtspstream { background-color: var(--bg-card); color: var(--text-primary); }
 [data-theme="dark"] .exclude_species_list_option_highlight { color: var(--text-heading); background-color: var(--accent-light); }
 [data-theme="dark"] .testbtn { background: var(--bg-card) !important; color: var(--text-primary); }
+[data-theme="dark"] .kpi-icon-new-species { background: rgba(249, 115, 22, 0.15); color: #fb923c; }

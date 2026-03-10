@@ -426,7 +426,7 @@ if(isset($_GET['ajax_left_chart']) && $_GET['ajax_left_chart'] == "true") {
     <div class="kpi-label">Total Species</div>
   </div>
   <div class="kpi-card">
-    <div class="kpi-icon" style="background: #fff7ed; color: #f97316;">
+    <div class="kpi-icon kpi-icon-new-species">
       ✨
     </div>
     <div class="kpi-value">
