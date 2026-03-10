@@ -83,7 +83,9 @@ Note: see 'Migrating from previous forks' on how to migrate from Nachtzuster.
 * A USB Microphone or Sound Card
 
 ## Installation
-[A comprehensive installation guide is available here](https://github.com/mcguirepr89/BirdNET-Pi/wiki/Installation-Guide). *Note: This guide is slightly out-dated. Make sure to choose **Bookworm** or **Trixie** when imaging your SD card, and use the curl command below instead of the one in the wiki.*
+[A comprehensive installation guide is available here](https://github.com/mcguirepr89/BirdNET-Pi/wiki/Installation-Guide).
+
+*Note: The title of this wiki guide states that it is deprecated and tells you to "use Nachtzuster's fork." Please be aware that this guide was written for the original creator (mcguirepr89), who predates both Nachtzuster and this Modern Version. **This Modern Version fork is NOT deprecated and you should absolutely still use it.** While the wiki guide itself is visually outdated and contains this warning, the initial OS installation process before you reach the web UI is still exactly the same. Just follow the steps, but make sure to choose **Bookworm** or **Trixie** when imaging your SD card, and use the `curl` command provided below instead of the one listed in the wiki.*
 
 Please note that installing BirdNET-Pi on top of other existing servers is not supported. If this is something that you require, please open a discussion for your idea and inquire about how to contribute to development.
 
