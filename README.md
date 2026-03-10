@@ -29,7 +29,7 @@ This version introduces a complete overhaul of the user interface to bring the s
 - **Live Audio Player:** Redesigned the Live Audio player as a dynamic floating panel that pins to the top right and gracefully auto-retracts.
 
 **3. Advanced Analytics & Data Visualizations**
-- **Comprehensive Analytics Dashboard (Chart.js):** Replaced legacy graphs with fully interactive Chart.js instances (zoom, pan, responsive resize). Specific tools include:
+- **Comprehensive Analytics Dashboard (Chart.js):** Replaced legacy graphs with fully interactive Chart.js instances (hover tooltips, legend toggling, responsive resizing). Specific tools include:
   - **Top 10 Species:** Horizontal bar ranking of most frequent visitors.
   - **Detections by Time of Day:** Bar chart showing aggregate hourly activity levels.
   - **Detection Trends:** Line chart plotting overall daily volume.
