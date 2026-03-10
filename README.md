@@ -130,7 +130,7 @@ The BirdNET-Pi can be accessed from any web browser on the same network:
 - Default Basic Authentication Username: `birdnet`
 - Password is empty by default. Set this in "Tools" > "Settings" > "Advanced Settings"
 
-Please take a look at the [wiki](https://github.com/mcguirepr89/BirdNET-Pi/wiki) and our [discussions](https://github.com/zach7036/BirdNET-Pi-Enhanced-Version/discussions) for information on:
+Please take a look at the [original wiki](https://github.com/mcguirepr89/BirdNET-Pi/wiki) and our [discussions](https://github.com/zach7036/BirdNET-Pi-Enhanced-Version/discussions) for information on:
 - [BirdNET-Pi's Deep Convolutional Neural Network(s)](https://github.com/mcguirepr89/BirdNET-Pi/wiki/BirdNET-Pi:-some-theory-on-classification-&-some-practical-hints)
 - [Making your installation public](https://github.com/mcguirepr89/BirdNET-Pi/wiki/Sharing-Your-BirdNET-Pi)
 - [Backing up and restoring your database](https://github.com/mcguirepr89/BirdNET-Pi/wiki/Backup-and-Restore-the-Database)
@@ -176,7 +176,7 @@ The following command will completely uninstall the software and remove the Bird
 ## Migrating from previous forks
 Before switching, make sure your current installation is fully up-to-date and **make sure to have a backup**. A backup is the only way to get back to the original fork if desired. Please note that upgrading your underlying OS in-place from Bullseye to Bookworm/Trixie is not going to work. If you are upgrading your OS, you need to start from a fresh install and copy back your data via the Restore tool.
 
-If your OS is already correct, run these commands to migrate your existing installation to this modern repo:
+If your OS is already correct, run these commands to migrate your existing installation to this enhanced repo:
 ```
 git remote remove origin
 git remote add origin https://github.com/zach7036/BirdNET-Pi-Enhanced-Version.git
