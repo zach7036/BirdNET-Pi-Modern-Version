@@ -15,6 +15,8 @@ This repository is an enhanced, fully modernized version of BirdNET-Pi, built on
 
 This version introduces a complete overhaul of the user interface to bring the system inline with modern web design standards, along with highly requested functional improvements.
 
+Note: see 'Migrating from previous forks' on how to migrate from Nachtzuster.
+
 ### Comprehensive List of Updates & New Features:
 
 **1. Complete UI & Theme Redesign**
