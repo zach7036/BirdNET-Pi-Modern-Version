@@ -97,7 +97,7 @@ Check out birds from around the world
 ![Species Gallery](docs/species_gallery.png)
 
 ## Requirements
-* A Raspberry Pi 5, Raspberry 4B, Raspberry Pi 400, Raspberry Pi 3B+, or Raspberry Pi 0W2 (The 3B+ and 0W2 must run on RaspiOS-ARM64-Lite)
+* A Raspberry Pi 5, Raspberry 4B, Raspberry Pi 400, Raspberry Pi 3B+, or Raspberry Pi 0W2 (The 3B+ and 0W2 must run on RaspiOS-ARM64-Lite). *Note: Due to the heavy data processing required for the modern Analytics and Insights pages, a newer Raspberry Pi (4B, 400, or 5) is highly recommended for optimal performance.*
 * An SD Card with the 64-bit version of RaspiOS installed (please use **Trixie**) -- Lite is recommended, but the installation works on RaspiOS-ARM64-Full as well. Downloads available within the [Raspberry Pi Imager](https://www.raspberrypi.com/software/).
 * A USB Microphone or Sound Card
 
@@ -122,7 +122,7 @@ The BirdNET-Pi can be accessed from any web browser on the same network:
 - Default Basic Authentication Username: `birdnet`
 - Password is empty by default. Set this in "Tools" > "Settings" > "Advanced Settings"
 
-Please take a look at the [wiki](https://github.com/mcguirepr89/BirdNET-Pi/wiki) and [discussions](https://github.com/mcguirepr89/BirdNET-Pi/discussions) for information on:
+Please take a look at the [wiki](https://github.com/mcguirepr89/BirdNET-Pi/wiki) and our [discussions](https://github.com/zach7036/BirdNET-Pi-Modern-Version/discussions) for information on:
 - [BirdNET-Pi's Deep Convolutional Neural Network(s)](https://github.com/mcguirepr89/BirdNET-Pi/wiki/BirdNET-Pi:-some-theory-on-classification-&-some-practical-hints)
 - [Making your installation public](https://github.com/mcguirepr89/BirdNET-Pi/wiki/Sharing-Your-BirdNET-Pi)
 - [Backing up and restoring your database](https://github.com/mcguirepr89/BirdNET-Pi/wiki/Backup-and-Restore-the-Database)
@@ -178,18 +178,10 @@ git remote add origin https://github.com/zach7036/BirdNET-Pi-Modern-Version.git
 ## Troubleshooting and Ideas
 *Hint: A lot of weird problems can be solved by simply restarting the core services. Do this from the web interface "Tools" > "Services" > "Restart Core Services".*
 
-Having trouble or have an idea? Submit an issue for trouble and a discussion for ideas. Please do *not* submit an issue as a discussion. Ensure you search the repo for your issue before creating a new one.
+Having trouble or have an idea? Submit an [issue to the `zach7036/BirdNET-Pi-Modern-Version` tracker](https://github.com/zach7036/BirdNET-Pi-Modern-Version/issues) for trouble and a [discussion](https://github.com/zach7036/BirdNET-Pi-Modern-Version/discussions) for ideas. Please do *not* submit an issue as a discussion. Ensure you search the repo for your issue before creating a new one.
 
 ## Sharing
-Please join a Discussion and consider joining [BirdWeather!](https://app.birdweather.com) If you find BirdNET-Pi has been worth your time, please consider [making your installation public](https://github.com/mcguirepr89/BirdNET-Pi/wiki/Sharing-Your-BirdNET-Pi).
-
-## Homeassistant addon
-BirdNET-Pi can also be run as a [Homeassistant](https://www.home-assistant.io/) addon through Docker.
-For more information: https://github.com/alexbelgium/hassio-addons/blob/master/birdnet-pi/README.md
-
-## Docker
-BirdNET-Pi can also be run as a standalone Docker container.
-For more information: https://github.com/alexbelgium/hassio-addons/blob/master/birdnet-pi/README_standalone.md
+Please join a [Discussion](https://github.com/zach7036/BirdNET-Pi-Modern-Version/discussions) and consider joining [BirdWeather!](https://app.birdweather.com) If you find BirdNET-Pi has been worth your time, please consider [making your installation public](https://github.com/mcguirepr89/BirdNET-Pi/wiki/Sharing-Your-BirdNET-Pi).
 
 ## Cool Links
 - [Marie Lelouche's <i>Out of Spaces</i>](https://www.lestanneries.fr/exposition/marie-lelouche-out-of-spaces/) using BirdNET-Pi in post-sculpture VR! [Press Kit](https://github.com/mcguirepr89/BirdNET-Pi-assets/blob/main/dp_out_of_spaces_marie_lelouche_digital_05_01_22.pdf)
