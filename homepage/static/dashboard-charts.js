@@ -95,10 +95,11 @@
         // Clear canvas
         ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-        function getWeatherEmoji(code) {
+        function getWeatherEmoji(code, is_day) {
             if (code === undefined || code === null) return '';
-            if (code === 0) return '☀️';
-            if (code >= 1 && code <= 3) return '⛅';
+            var isNight = is_day === 0;
+            if (code === 0) return isNight ? '🌙' : '☀️';
+            if (code >= 1 && code <= 3) return isNight ? '☁️' : '⛅';
             if (code === 45 || code === 48) return '🌫️';
             if (code >= 51 && code <= 55) return '🌦️';
             if (code >= 61 && code <= 65) return '🌧️';
@@ -128,7 +129,7 @@
             // Draw Weather
             if (weather && weather[h]) {
                 var w = weather[h];
-                var emoji = getWeatherEmoji(w.code);
+                var emoji = getWeatherEmoji(w.code, w.is_day);
                 ctx.font = '13px sans-serif'; // Emoji font
                 ctx.fillText(emoji, x, yHour - 16);
                 ctx.font = '10px Roboto Flex, sans-serif';

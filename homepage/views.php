@@ -347,17 +347,23 @@ elseif ($config["LONGITUDE"] == "0.000") {
       $feed_db = new SQLite3('./scripts/birds.db', SQLITE3_OPEN_READONLY);
       $check_weather = $feed_db->query("SELECT name FROM sqlite_master WHERE type='table' AND name='weather'");
       if ($check_weather && $check_weather->fetchArray()) {
-          $w_stmt = $feed_db->prepare("SELECT Temp, ConditionCode FROM weather WHERE Date = DATE('now','localtime') AND Hour = ?");
+          $hasIsDay = false;
+          $cols = $feed_db->query("PRAGMA table_info(weather)");
+          while($c = $cols->fetchArray()) { if($c['name'] == 'IsDay') { $hasIsDay = true; break; } }
+          
+          $sel = $hasIsDay ? "Temp, ConditionCode, IsDay" : "Temp, ConditionCode";
+          $w_stmt = $feed_db->prepare("SELECT $sel FROM weather WHERE Date = DATE('now','localtime') AND Hour = ?");
           if ($w_stmt) {
               $w_stmt->bindValue(1, (int)date('G'), SQLITE3_INTEGER);
               $w_res = $w_stmt->execute();
               if ($w_row = $w_res->fetchArray(SQLITE3_ASSOC)) {
                   $temp = round((float)$w_row['Temp']);
                   $code = (int)$w_row['ConditionCode'];
+                  $is_day = $hasIsDay ? (int)$w_row['IsDay'] : 1;
                   
                   $emoji = '☁️';
-                  if ($code === 0) $emoji = '☀️';
-                  elseif ($code >= 1 && $code <= 3) $emoji = '⛅';
+                  if ($code === 0) $emoji = $is_day === 0 ? '🌙' : '☀️';
+                  elseif ($code >= 1 && $code <= 3) $emoji = $is_day === 0 ? '☁️' : '⛅';
                   elseif ($code === 45 || $code === 48) $emoji = '🌫️';
                   elseif ($code >= 51 && $code <= 55) $emoji = '🌦️';
                   elseif ($code >= 61 && $code <= 65) $emoji = '🌧️';

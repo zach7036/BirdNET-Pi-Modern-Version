@@ -122,13 +122,18 @@ if(isset($_GET['ajax_chart_data']) && $_GET['ajax_chart_data'] == "true") {
   $weather = [];
   $check_table = $db->query("SELECT name FROM sqlite_master WHERE type='table' AND name='weather'");
   if ($check_table && $check_table->fetchArray()) {
-      $stmt3 = $db->prepare("SELECT Hour, Temp, ConditionCode FROM weather WHERE Date = DATE('now','localtime')");
+      $hasIsDay = false;
+      $cols = $db->query("PRAGMA table_info(weather)");
+      while($c = $cols->fetchArray()) { if($c['name'] == 'IsDay') $hasIsDay = true; }
+      $sel = $hasIsDay ? "Hour, Temp, ConditionCode, IsDay" : "Hour, Temp, ConditionCode";
+      $stmt3 = $db->prepare("SELECT $sel FROM weather WHERE Date = DATE('now','localtime')");
       if ($stmt3) {
           $res3 = $stmt3->execute();
           while ($row = $res3->fetchArray(SQLITE3_ASSOC)) {
               $weather[(int)$row['Hour']] = [
                   'temp' => round((float)$row['Temp']),
-                  'code' => (int)$row['ConditionCode']
+                  'code' => (int)$row['ConditionCode'],
+                  'is_day' => $hasIsDay ? (int)$row['IsDay'] : 1
               ];
           }
       }
