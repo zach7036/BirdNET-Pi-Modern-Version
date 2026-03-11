@@ -365,10 +365,10 @@ elseif ($config["LONGITUDE"] == "0.000") {
                   if ($code === 0) $emoji = $is_day === 0 ? '🌙' : '☀️';
                   elseif ($code >= 1 && $code <= 3) $emoji = $is_day === 0 ? '☁️' : '⛅';
                   elseif ($code === 45 || $code === 48) $emoji = '🌫️';
-                  elseif ($code >= 51 && $code <= 55) $emoji = '🌦️';
+                  elseif ($code >= 51 && $code <= 55) $emoji = $is_day === 0 ? '🌧️' : '🌦️';
                   elseif ($code >= 61 && $code <= 65) $emoji = '🌧️';
                   elseif ($code >= 71 && $code <= 75) $emoji = '❄️';
-                  elseif ($code >= 80 && $code <= 82) $emoji = '🌦️';
+                  elseif ($code >= 80 && $code <= 82) $emoji = $is_day === 0 ? '🌧️' : '🌦️';
                   elseif ($code >= 95) $emoji = '⛈️';
                   
                   $current_weather_str = "<span style='margin-left:auto; font-size:0.9em; font-weight:normal; color:var(--text-secondary, #6b7280);'>{$temp}&deg;F {$emoji}</span>";
