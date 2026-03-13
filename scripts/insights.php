@@ -236,11 +236,13 @@ if ($subview == 'environmental') {
             WHERE w.WindSpeed IS NOT NULL
             GROUP BY bracket");
 
-        while($row = $wind_res->fetchArray(SQLITE3_ASSOC)) {
-            $b = $row['bracket'];
-            if (isset($master_wind[$b])) {
-                $master_wind[$b]['det_count'] = $row['det_count'];
-                $master_wind[$b]['species_count'] = $row['species_count'];
+        if ($wind_res) {
+            while($row = $wind_res->fetchArray(SQLITE3_ASSOC)) {
+                $b = $row['bracket'];
+                if (isset($master_wind[$b])) {
+                    $master_wind[$b]['det_count'] = $row['det_count'];
+                    $master_wind[$b]['species_count'] = $row['species_count'];
+                }
             }
         }
         $wind_impact = $master_wind;
@@ -275,11 +277,13 @@ if ($subview == 'environmental') {
             WHERE w.WindDirection IS NOT NULL
             GROUP BY cardinal");
 
-        while($row = $dir_res->fetchArray(SQLITE3_ASSOC)) {
-            $c = $row['cardinal'];
-            if (isset($master_direction[$c])) {
-                $master_direction[$c]['det_count'] = $row['det_count'];
-                $master_direction[$c]['species_count'] = $row['species_count'];
+        if ($dir_res) {
+            while($row = $dir_res->fetchArray(SQLITE3_ASSOC)) {
+                $c = $row['cardinal'];
+                if (isset($master_direction[$c])) {
+                    $master_direction[$c]['det_count'] = $row['det_count'];
+                    $master_direction[$c]['species_count'] = $row['species_count'];
+                }
             }
         }
         $direction_impact = $master_direction;
