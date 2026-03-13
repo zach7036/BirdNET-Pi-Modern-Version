@@ -178,8 +178,29 @@ if ($subview == 'environmental') {
             }
         }
         $temp_brackets = array_values($master_brackets);
-        $cond_res = $db->query("SELECT w.ConditionCode, COUNT(*) as det_count, COUNT(DISTINCT d.Sci_Name) as species_count FROM detections d INNER JOIN weather w ON d.Date = w.Date AND CAST(substr(d.Time, 1, 2) AS INTEGER) = w.Hour GROUP BY w.ConditionCode ORDER BY det_count DESC LIMIT 8");
-        while($row = $cond_res->fetchArray(SQLITE3_ASSOC)) { $code = $row['ConditionCode']; $row['description'] = isset($wmo_codes[$code]) ? $wmo_codes[$code] : "Code $code"; $condition_impact[] = $row; }
+        $cond_res = $db->query("SELECT 
+            CASE 
+                WHEN w.ConditionCode = 0 THEN 'Clear'
+                WHEN w.ConditionCode BETWEEN 1 AND 3 THEN 'Cloudy'
+                WHEN w.ConditionCode IN (45, 48) THEN 'Fog'
+                WHEN w.ConditionCode BETWEEN 51 AND 67 OR w.ConditionCode BETWEEN 80 AND 82 THEN 'Rain'
+                WHEN w.ConditionCode BETWEEN 71 AND 77 OR w.ConditionCode IN (85, 86) THEN 'Snow'
+                WHEN w.ConditionCode BETWEEN 95 AND 99 THEN 'Thunderstorm'
+                ELSE 'Cloudy' 
+            END as description,
+            COUNT(*) as det_count, 
+            COUNT(DISTINCT d.Sci_Name) as species_count 
+            FROM detections d 
+            INNER JOIN weather w ON d.Date = w.Date AND CAST(substr(d.Time, 1, 2) AS INTEGER) = w.Hour 
+            GROUP BY description 
+            ORDER BY det_count DESC");
+        
+        while($row = $cond_res->fetchArray(SQLITE3_ASSOC)) { 
+            $desc = $row['description'];
+            $emojis = ['Clear' => '☀️', 'Cloudy' => '☁️', 'Fog' => '🌫️', 'Rain' => '🌧️', 'Snow' => '❄️', 'Thunderstorm' => '⛈️'];
+            $row['emoji'] = isset($emojis[$desc]) ? $emojis[$desc] : '☁️';
+            $condition_impact[] = $row; 
+        }
         $ideal_res = $db->query("SELECT d.Com_Name, ROUND(AVG(w.Temp), 1) as avg_temp, ROUND(MIN(w.Temp), 1) as min_temp, ROUND(MAX(w.Temp), 1) as max_temp, COUNT(*) as cnt FROM detections d INNER JOIN weather w ON d.Date = w.Date AND CAST(substr(d.Time, 1, 2) AS INTEGER) = w.Hour GROUP BY d.Sci_Name HAVING cnt >= 5 ORDER BY cnt DESC");
         while($row = $ideal_res->fetchArray(SQLITE3_ASSOC)) { $species_ideal[] = $row; }
         $trend_res = $db->query("SELECT d.Date, COUNT(*) as det_count, ROUND(AVG(w.Temp), 1) as avg_temp FROM detections d LEFT JOIN weather w ON d.Date = w.Date AND CAST(substr(d.Time, 1, 2) AS INTEGER) = w.Hour WHERE d.Date >= '$one_month_ago' GROUP BY d.Date ORDER BY d.Date ASC");
@@ -1006,7 +1027,7 @@ $db->close();
                 <?php foreach($condition_impact as $c): ?>
                 <div class="insights-stats-item">
                     <div>
-                        <div class="insights-stats-name" style="margin-bottom: 2px;"><?php echo $c['description']; ?></div>
+                        <div class="insights-stats-name" style="margin-bottom: 2px;"><?php echo $c['emoji']; ?> <?php echo $c['description']; ?></div>
                         <div style="font-size: 0.8em; color: var(--text-muted);"><?php echo $c['species_count']; ?> species active</div>
                     </div>
                     <span class="insights-stats-count"><?php echo number_format($c['det_count']); ?></span>

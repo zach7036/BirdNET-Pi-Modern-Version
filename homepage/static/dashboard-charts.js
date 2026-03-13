@@ -300,7 +300,16 @@
                 var weatherStr = "";
                 if (weather && weather[hour]) {
                     var w = weather[hour];
-                    var codes = { 0: 'Clear', 1: 'Mainly Clear', 2: 'Partly Cloudy', 3: 'Overcast', 45: 'Fog', 51: 'Drizzle', 61: 'Rain', 71: 'Snow', 95: 'Thunderstorm' };
+                    var codes = { 
+                        0: 'Clear', 1: 'Mostly Clear', 2: 'Partly Cloudy', 3: 'Overcast', 
+                        45: 'Fog', 48: 'Rime Fog', 
+                        51: 'Light Drizzle', 53: 'Moderate Drizzle', 55: 'Heavy Drizzle',
+                        61: 'Slight Rain', 63: 'Moderate Rain', 65: 'Heavy Rain',
+                        71: 'Slight Snow', 73: 'Moderate Snow', 75: 'Heavy Snow', 77: 'Snow Grains',
+                        80: 'Slight Showers', 81: 'Moderate Showers', 82: 'Violent Showers',
+                        85: 'Slight Snow Showers', 86: 'Heavy Snow Showers',
+                        95: 'Thunderstorm', 96: 'Thunderstorm with Hail', 99: 'Thunderstorm with Heavy Hail'
+                    };
                     var cond = codes[w.code] || 'Cloudy';
                     weatherStr = '<br><span style="color:#aaa;font-size:10px;">' + w.temp + '°F • ' + cond + '</span>';
                 }
