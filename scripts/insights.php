@@ -420,9 +420,11 @@ $db->close();
         border-radius: 20px;
         border: 1px solid var(--border);
         box-shadow: var(--shadow-sm);
-        /* overflow: hidden; removed to allow tooltips to show */
         transition: all 0.3s ease;
         overflow: visible !important;
+        display: flex;
+        flex-direction: column;
+        height: 100%;
     }
     .insights-section:hover {
         box-shadow: var(--shadow-md);
@@ -440,7 +442,13 @@ $db->close();
         color: var(--text-heading);
         letter-spacing: -0.02em;
     }
-    .insights-stats-list { display: flex; flex-direction: column; gap: 10px; padding: 20px; }
+    .insights-stats-list { 
+        display: flex; 
+        flex-direction: column; 
+        gap: 10px; 
+        padding: 20px; 
+        flex-grow: 1;
+    }
     .insights-stats-item {
         display: flex;
         justify-content: space-between;
@@ -1144,7 +1152,7 @@ $db->close();
         </section>
 
         <!-- Wind Direction Impact -->
-        <section class="insights-section" style="margin-top: 30px;">
+        <section class="insights-section">
             <div class="insights-section-title">🧭 Detections by Wind Direction <span class="info-btn">ⓘ<span class="info-tooltip">Identifying which wind directions are most productive for detections at your location.</span></span></div>
             <div class="insights-stats-list">
                 <?php foreach($direction_impact as $cardinal => $d): ?>
