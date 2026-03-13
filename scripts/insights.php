@@ -1135,29 +1135,41 @@ $db->close();
         <!-- Unified Wind Trends -->
         <section class="insights-section" style="grid-column: 1 / -1; margin-top: 10px;">
             <div class="insights-section-title">🌬️ Detections by Wind Speed & Direction <span class="info-btn">ⓘ<span class="info-tooltip">A combined view of how wind intensity and direction affect bird activity at your location.</span></span></div>
-            <div class="insights-stats-list" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px;">
+            <div class="insights-stats-list" style="padding: 15px 25px;">
                 <?php foreach($wind_impact as $bracket => $w): ?>
-                <div class="insights-stats-item" style="flex-direction: column; align-items: stretch; gap: 12px; padding: 20px;">
-                    <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-light); padding-bottom: 10px; margin-bottom: 5px;">
-                        <div>
-                            <div class="insights-stats-name" style="font-size: 1.1em;"><?php echo $w['emoji']; ?> <?php echo $bracket; ?> mph</div>
-                            <div style="font-size: 0.8em; color: var(--text-muted);">
-                                <?php echo $w['det_count'] > 0 ? $w['species_count'] . ' species active' : 'No species recorded'; ?>
-                            </div>
+                <div class="insights-stats-item" style="display: flex; flex-direction: row; align-items: center; justify-content: space-between; gap: 20px; padding: 16px 20px; margin-bottom: 8px;">
+                    <!-- Speed & Species Mix -->
+                    <div style="flex: 0 0 180px;">
+                        <div class="insights-stats-name" style="font-size: 1.1em; margin-bottom: 2px;"><?php echo $w['emoji']; ?> <?php echo $bracket; ?> mph</div>
+                        <div style="font-size: 0.8em; color: var(--text-muted);">
+                            <?php echo $w['det_count'] > 0 ? $w['species_count'] . ' species active' : 'No species recorded'; ?>
                         </div>
-                        <span class="insights-stats-count" style="font-size: 1.3em;"><?php echo $w['det_count'] > 0 ? number_format($w['det_count']) : 'N/A'; ?></span>
                     </div>
                     
-                    <?php if(!empty($w['cardinals'])): ?>
-                    <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px;">
-                        <?php foreach($w['cardinals'] as $dir): ?>
-                        <div style="background: var(--bg-card); padding: 6px 4px; border-radius: 8px; border: 1px solid var(--border-light); text-align: center; font-size: 0.75em; display: flex; flex-direction: column; align-items: center;">
-                            <span style="color: var(--text-muted); font-weight: 700;"><?php echo $dir['emoji']; ?> <?php echo $dir['label']; ?></span>
-                            <span style="color: var(--accent); font-weight: 800;"><?php echo number_format($dir['count']); ?></span>
+                    <!-- Cardinal Mini-Grid (Center) -->
+                    <div style="flex: 1; display: flex; justify-content: center;">
+                        <?php if(!empty($w['cardinals'])): ?>
+                        <div style="display: flex; gap: 15px; flex-wrap: wrap; justify-content: center;">
+                            <?php foreach($w['cardinals'] as $dir): ?>
+                            <div style="text-align: center; min-width: 45px;">
+                                <div style="font-size: 0.85em; color: var(--text-muted); font-weight: 700; margin-bottom: 2px;">
+                                    <?php echo $dir['emoji']; ?> <?php echo $dir['label']; ?>
+                                </div>
+                                <div style="color: var(--accent); font-weight: 800; font-size: 0.95em;">
+                                    <?php echo number_format($dir['count']); ?>
+                                </div>
+                            </div>
+                            <?php endforeach; ?>
                         </div>
-                        <?php endforeach; ?>
+                        <?php else: ?>
+                            <span style="color: var(--text-muted); font-size: 0.9em; font-style: italic;">No directional data</span>
+                        <?php endif; ?>
                     </div>
-                    <?php endif; ?>
+
+                    <!-- Total Detections (Right) -->
+                    <div style="flex: 0 0 100px; text-align: right;">
+                        <span class="insights-stats-count" style="font-size: 1.4em;"><?php echo $w['det_count'] > 0 ? number_format($w['det_count']) : 'N/A'; ?></span>
+                    </div>
                 </div>
                 <?php endforeach; ?>
             </div>
