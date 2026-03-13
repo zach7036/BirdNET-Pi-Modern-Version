@@ -273,7 +273,7 @@ if ($subview == 'environmental') {
             GROUP BY bracket, cardinal");
 
         if ($nest_res) {
-            $cardinal_emojis = ['N'=>'⬆️','NE'=>'↗️','E'=>'➡️','SE'=>'↘️','S'=>'⬇️','SW'=>'↙️','W'=>'⬅️','NW'=>'↖️'];
+            $cardinal_emojis = ['N'=>'⬇️','NE'=>'↙️','E'=>'⬅️','SE'=>'↖️','S'=>'⬆️','SW'=>'↗️','W'=>'➡️','NW'=>'↘️'];
             while($row = $nest_res->fetchArray(SQLITE3_ASSOC)) {
                 $b = $row['bracket'];
                 if (isset($unified_wind[$b])) {
