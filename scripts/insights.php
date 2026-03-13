@@ -211,6 +211,78 @@ if ($subview == 'environmental') {
             }
         }
         $condition_impact = $master_conditions;
+
+        // --- Wind Speed Impact ---
+        $master_wind = [
+            'Calm (0-5)' => ['emoji' => '🍃', 'det_count' => 0, 'species_count' => 0],
+            'Breezy (6-15)' => ['emoji' => '🌬️', 'det_count' => 0, 'species_count' => 0],
+            'Windy (16-25)' => ['emoji' => '💨', 'det_count' => 0, 'species_count' => 0],
+            'Very Windy (26-35)' => ['emoji' => '🌪️', 'det_count' => 0, 'species_count' => 0],
+            'Gale Force (36+)' => ['emoji' => '🚩', 'det_count' => 0, 'species_count' => 0]
+        ];
+
+        $wind_res = $db->query("SELECT 
+            CASE 
+                WHEN w.WindSpeed <= 5 THEN 'Calm (0-5)'
+                WHEN w.WindSpeed <= 15 THEN 'Breezy (6-15)'
+                WHEN w.WindSpeed <= 25 THEN 'Windy (16-25)'
+                WHEN w.WindSpeed <= 35 THEN 'Very Windy (26-35)'
+                ELSE 'Gale Force (36+)'
+            END as bracket,
+            COUNT(*) as det_count, 
+            COUNT(DISTINCT d.Sci_Name) as species_count 
+            FROM detections d 
+            INNER JOIN weather w ON d.Date = w.Date AND CAST(substr(d.Time, 1, 2) AS INTEGER) = w.Hour 
+            WHERE w.WindSpeed IS NOT NULL
+            GROUP BY bracket");
+
+        while($row = $wind_res->fetchArray(SQLITE3_ASSOC)) {
+            $b = $row['bracket'];
+            if (isset($master_wind[$b])) {
+                $master_wind[$b]['det_count'] = $row['det_count'];
+                $master_wind[$b]['species_count'] = $row['species_count'];
+            }
+        }
+        $wind_impact = $master_wind;
+
+        // --- Wind Direction Trends ---
+        $master_direction = [
+            'N' => ['emoji' => '⬆️', 'det_count' => 0, 'species_count' => 0],
+            'NE' => ['emoji' => '↗️', 'det_count' => 0, 'species_count' => 0],
+            'E' => ['emoji' => '➡️', 'det_count' => 0, 'species_count' => 0],
+            'SE' => ['emoji' => '↘️', 'det_count' => 0, 'species_count' => 0],
+            'S' => ['emoji' => '⬇️', 'det_count' => 0, 'species_count' => 0],
+            'SW' => ['emoji' => '↙️', 'det_count' => 0, 'species_count' => 0],
+            'W' => ['emoji' => '⬅️', 'det_count' => 0, 'species_count' => 0],
+            'NW' => ['emoji' => '↖️', 'det_count' => 0, 'species_count' => 0]
+        ];
+
+        $dir_res = $db->query("SELECT 
+            CASE 
+                WHEN w.WindDirection >= 337.5 OR w.WindDirection < 22.5 THEN 'N'
+                WHEN w.WindDirection < 67.5 THEN 'NE'
+                WHEN w.WindDirection < 112.5 THEN 'E'
+                WHEN w.WindDirection < 157.5 THEN 'SE'
+                WHEN w.WindDirection < 202.5 THEN 'S'
+                WHEN w.WindDirection < 247.5 THEN 'SW'
+                WHEN w.WindDirection < 292.5 THEN 'W'
+                ELSE 'NW'
+            END as cardinal,
+            COUNT(*) as det_count, 
+            COUNT(DISTINCT d.Sci_Name) as species_count 
+            FROM detections d 
+            INNER JOIN weather w ON d.Date = w.Date AND CAST(substr(d.Time, 1, 2) AS INTEGER) = w.Hour 
+            WHERE w.WindDirection IS NOT NULL
+            GROUP BY cardinal");
+
+        while($row = $dir_res->fetchArray(SQLITE3_ASSOC)) {
+            $c = $row['cardinal'];
+            if (isset($master_direction[$c])) {
+                $master_direction[$c]['det_count'] = $row['det_count'];
+                $master_direction[$c]['species_count'] = $row['species_count'];
+            }
+        }
+        $direction_impact = $master_direction;
         $ideal_res = $db->query("SELECT d.Com_Name, ROUND(AVG(w.Temp), 1) as avg_temp, ROUND(MIN(w.Temp), 1) as min_temp, ROUND(MAX(w.Temp), 1) as max_temp, COUNT(*) as cnt FROM detections d INNER JOIN weather w ON d.Date = w.Date AND CAST(substr(d.Time, 1, 2) AS INTEGER) = w.Hour GROUP BY d.Sci_Name HAVING cnt >= 5 ORDER BY cnt DESC");
         while($row = $ideal_res->fetchArray(SQLITE3_ASSOC)) { $species_ideal[] = $row; }
         $trend_res = $db->query("SELECT d.Date, COUNT(*) as det_count, ROUND(AVG(w.Temp), 1) as avg_temp FROM detections d LEFT JOIN weather w ON d.Date = w.Date AND CAST(substr(d.Time, 1, 2) AS INTEGER) = w.Hour WHERE d.Date >= '$one_month_ago' GROUP BY d.Date ORDER BY d.Date ASC");
@@ -1046,6 +1118,42 @@ $db->close();
                 </div>
                 <?php endforeach; ?>
                 <?php endif; ?>
+            </div>
+        </section>
+
+        <!-- Wind Speed Impact -->
+        <section class="insights-section">
+            <div class="insights-section-title">💨 Detections by Wind Speed <span class="info-btn">ⓘ<span class="info-tooltip">Correlating activity with wind intensity to see if gusty conditions suppress detections.</span></span></div>
+            <div class="insights-stats-list">
+                <?php foreach($wind_impact as $bracket => $w): ?>
+                <div class="insights-stats-item">
+                    <div>
+                        <div class="insights-stats-name" style="margin-bottom: 2px;"><?php echo $w['emoji']; ?> <?php echo $bracket; ?> mph</div>
+                        <div style="font-size: 0.8em; color: var(--text-muted);">
+                            <?php echo $w['det_count'] > 0 ? $w['species_count'] . ' species active' : 'No species recorded'; ?>
+                        </div>
+                    </div>
+                    <span class="insights-stats-count"><?php echo $w['det_count'] > 0 ? number_format($w['det_count']) : 'N/A'; ?></span>
+                </div>
+                <?php endforeach; ?>
+            </div>
+        </section>
+
+        <!-- Wind Direction Impact -->
+        <section class="insights-section" style="margin-top: 30px;">
+            <div class="insights-section-title">🧭 Detections by Wind Direction <span class="info-btn">ⓘ<span class="info-tooltip">Identifying which wind directions are most productive for detections at your location.</span></span></div>
+            <div class="insights-stats-list">
+                <?php foreach($direction_impact as $cardinal => $d): ?>
+                <div class="insights-stats-item">
+                    <div>
+                        <div class="insights-stats-name" style="margin-bottom: 2px;"><?php echo $d['emoji']; ?> Wind from the <?php echo $cardinal; ?></div>
+                        <div style="font-size: 0.8em; color: var(--text-muted);">
+                            <?php echo $d['det_count'] > 0 ? $d['species_count'] . ' species active' : 'No species recorded'; ?>
+                        </div>
+                    </div>
+                    <span class="insights-stats-count"><?php echo $d['det_count'] > 0 ? number_format($d['det_count']) : 'N/A'; ?></span>
+                </div>
+                <?php endforeach; ?>
             </div>
         </section>
     </div>

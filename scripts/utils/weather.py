@@ -20,9 +20,7 @@ def update_weather():
         return
 
     # Use Open-Meteo to fetch the past day and current forecast day
-    # We use fahrenheit here because the UI logic can convert it later if needed, or we just display it natively. 
-    # To be universally robust, let's fetch in Celsius internally and convert on frontend or rely on user settings. Wait, many users prefer F. We will fetch F for now to match the tooltip pitch.
-    url = f"https://api.open-meteo.com/v1/forecast?latitude={lat}&longitude={lon}&hourly=temperature_2m,weather_code,is_day&temperature_unit=fahrenheit&past_days=1&forecast_days=1&timezone=auto"
+    url = f"https://api.open-meteo.com/v1/forecast?latitude={lat}&longitude={lon}&hourly=temperature_2m,weather_code,is_day,wind_speed_10m,wind_direction_10m&temperature_unit=fahrenheit&wind_speed_unit=mph&past_days=1&forecast_days=1&timezone=auto"
     
     try:
         response = requests.get(url, timeout=15)
@@ -37,9 +35,10 @@ def update_weather():
     temps = data['hourly']['temperature_2m']
     codes = data['hourly']['weather_code']
     is_days = data['hourly']['is_day']
+    winds = data['hourly']['wind_speed_10m']
+    dirs = data['hourly']['wind_direction_10m']
 
     # Connect to the SQLite DB
-    # Note: Using uri=True to match db operations elsewhere, though standard path is fine.
     try:
         con = sqlite3.connect(DB_PATH)
         cur = con.cursor()
@@ -52,26 +51,32 @@ def update_weather():
                 Temp FLOAT,
                 ConditionCode INT,
                 IsDay INT,
+                WindSpeed FLOAT,
+                WindDirection INT,
                 PRIMARY KEY(Date, Hour)
             )
         ''')
         
-        # Check if IsDay exists (for existing tables)
+        # Check for new columns (for existing tables)
         cur.execute("PRAGMA table_info(weather)")
         columns = [column[1] for column in cur.fetchall()]
         if 'IsDay' not in columns:
             cur.execute("ALTER TABLE weather ADD COLUMN IsDay INT DEFAULT 1")
+        if 'WindSpeed' not in columns:
+            cur.execute("ALTER TABLE weather ADD COLUMN WindSpeed FLOAT")
+        if 'WindDirection' not in columns:
+            cur.execute("ALTER TABLE weather ADD COLUMN WindDirection INT")
         
         # Insert or replace hourly metrics
-        for t, temp, code, is_day in zip(times, temps, codes, is_days):
+        for t, temp, code, is_day, wind, direction in zip(times, temps, codes, is_days, winds, dirs):
             if temp is None:
                 continue
             dt = datetime.fromisoformat(t)
             date_str = dt.strftime('%Y-%m-%d')
             hour = dt.hour
             
-            cur.execute("INSERT OR REPLACE INTO weather (Date, Hour, Temp, ConditionCode, IsDay) VALUES (?, ?, ?, ?, ?)",
-                        (date_str, hour, temp, code, is_day))
+            cur.execute("INSERT OR REPLACE INTO weather (Date, Hour, Temp, ConditionCode, IsDay, WindSpeed, WindDirection) VALUES (?, ?, ?, ?, ?, ?, ?)",
+                        (date_str, hour, temp, code, is_day, wind, direction))
                         
         con.commit()
         con.close()
