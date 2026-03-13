@@ -1137,19 +1137,19 @@ $db->close();
             <div class="insights-section-title">🌬️ Detections by Wind Speed & Direction <span class="info-btn">ⓘ<span class="info-tooltip">A combined view of how wind intensity and direction affect bird activity at your location.</span></span></div>
             <div class="insights-stats-list" style="padding: 15px 25px;">
                 <?php foreach($wind_impact as $bracket => $w): ?>
-                <div class="insights-stats-item" style="display: flex; flex-direction: row; align-items: center; justify-content: space-between; gap: 20px; padding: 16px 20px; margin-bottom: 8px;">
+                <div class="insights-stats-item" style="display: flex; flex-direction: row; align-items: stretch; justify-content: space-between; gap: 0; padding: 16px 20px; margin-bottom: 8px;">
                     <!-- Speed & Species Mix -->
-                    <div style="flex: 0 0 180px; padding-right: 20px; border-right: 1px solid var(--border-light);">
-                        <div class="insights-stats-name" style="font-size: 1.1em; margin-bottom: 2px;"><?php echo $w['emoji']; ?> <?php echo $bracket; ?> mph</div>
-                        <div style="font-size: 0.8em; color: var(--text-muted);">
+                    <div style="flex: 0 0 220px; padding-right: 25px; border-right: 1.5px solid var(--border); display: flex; flex-direction: column; justify-content: center;">
+                        <div class="insights-stats-name" style="font-size: 1.1em; margin-bottom: 2px; white-space: nowrap;"><?php echo $w['emoji']; ?> <?php echo $bracket; ?> mph</div>
+                        <div style="font-size: 0.8em; color: var(--text-muted); white-space: nowrap;">
                             <?php echo $w['det_count'] > 0 ? $w['species_count'] . ' species active' : 'No species recorded'; ?>
                         </div>
                     </div>
                     
                     <!-- Cardinal Mini-Grid (Center) -->
-                    <div style="flex: 1; display: flex; justify-content: center; padding: 0 20px; border-right: 1px solid var(--border-light);">
+                    <div style="flex: 1; display: flex; justify-content: center; align-items: center; padding: 0 25px; border-right: 1.5px solid var(--border);">
                         <?php if(!empty($w['cardinals'])): ?>
-                        <div style="display: flex; gap: 15px; flex-wrap: wrap; justify-content: center;">
+                        <div style="display: flex; gap: 20px; flex-wrap: wrap; justify-content: center;">
                             <?php foreach($w['cardinals'] as $dir): ?>
                             <div style="text-align: center; min-width: 45px;">
                                 <div style="font-size: 0.85em; color: var(--text-muted); font-weight: 700; margin-bottom: 2px;">
@@ -1167,8 +1167,8 @@ $db->close();
                     </div>
 
                     <!-- Total Detections (Right) -->
-                    <div style="flex: 0 0 100px; text-align: right; padding-left: 20px;">
-                        <span class="insights-stats-count" style="font-size: 1.4em;"><?php echo $w['det_count'] > 0 ? number_format($w['det_count']) : 'N/A'; ?></span>
+                    <div style="flex: 0 0 120px; text-align: right; padding-left: 25px; display: flex; align-items: center; justify-content: flex-end;">
+                        <span class="insights-stats-count" style="font-size: 1.5em;"><?php echo $w['det_count'] > 0 ? number_format($w['det_count']) : 'N/A'; ?></span>
                     </div>
                 </div>
                 <?php endforeach; ?>
