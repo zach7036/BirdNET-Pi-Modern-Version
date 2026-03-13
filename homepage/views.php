@@ -188,7 +188,7 @@ elseif ($config["LONGITUDE"] == "0.000") {
         <button type="submit" name="view" value="Insights" data-subview="environmental" onclick="document.getElementById('sidebar_subview').value='environmental';">🌤️ <span>Weather</span></button>
         <button type="submit" name="view" value="Insights" data-subview="health" onclick="document.getElementById('sidebar_subview').value='health';">🔍 <span>Health</span></button>
         <button type="submit" name="view" value="Insights" data-subview="forecasting" onclick="document.getElementById('sidebar_subview').value='forecasting';">🔮 <span>Trends & Forecasting</span></button>
-        <button type="submit" name="view" value="Insights" data-subview="report" onclick="document.getElementById('sidebar_subview').value='report';">📰 <span>Weekly Report</span></button>
+        <button type="submit" name="view" value="Insights" data-subview="report" onclick="document.getElementById('sidebar_subview').value='report';">📰 <span>Reports</span></button>
       </div>
     </div>
     <button type="submit" name="view" value="Recordings" form="views" onclick="document.getElementById('sidebar_subview').value='';">🎵 <span>Recordings</span></button>
@@ -511,7 +511,7 @@ if(isset($_GET['view'])){
   if($_GET['view'] == "Todays Detections"){include('todays_detections.php');}
   if($_GET['view'] == "Kiosk"){$kiosk = true;include('todays_detections.php');}
   if($_GET['view'] == "Species Stats"){include('stats.php');}
-  if($_GET['view'] == "Weekly Report" || $_GET['view'] == "Report"){include('weekly_report.php');}
+  if($_GET['view'] == "Weekly Report" || $_GET['view'] == "Report" || $_GET['view'] == "Reports"){include('scripts/reports.php');}
   if($_GET['view'] == "Insights"){include('insights.php');}
   if($_GET['view'] == "Analytics"){include('scripts/analytics.php');}
   if($_GET['view'] == "Species"){include('scripts/species.php');}

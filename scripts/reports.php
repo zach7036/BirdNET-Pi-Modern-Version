@@ -4,25 +4,94 @@ ini_set('display_startup_errors', 1);
 error_reporting(E_ALL);
 require_once 'scripts/common.php';
 
-// Determine the start and end of the most recently completed week (Sunday to Saturday)
-// If today is Sunday, the completed week is the one that ended yesterday.
-if (date('w') == 0) {
-    // Today is Sunday, 'last sunday' would be 7 days ago, so we use 'today' as the anchor.
-    $anchor_sunday = strtotime('today');
+// --- Parameter Handling ---
+$type = isset($_GET['type']) ? $_GET['type'] : 'weekly';
+$date_raw = isset($_GET['date']) ? $_GET['date'] : 'today';
+
+// --- Date Range Calculation ---
+if (!isset($_GET['date'])) {
+    // Default to LAST completed period
+    switch ($type) {
+        case 'yearly':
+            $current_time = strtotime("-1 year");
+            break;
+        case 'monthly':
+            $current_time = strtotime("-1 month");
+            break;
+        case 'weekly':
+        default:
+            $current_time = strtotime("-1 week"); 
+            break;
+    }
 } else {
-    $anchor_sunday = strtotime('last sunday');
+    $current_time = strtotime($_GET['date']);
 }
 
-$startdate = $anchor_sunday - (7 * 86400);
-$enddate = $anchor_sunday - (1 * 86400);
+if (!$current_time) $current_time = time();
+
+$startdate = 0;
+$enddate = 0;
+$prior_start = 0;
+$prior_end = 0;
+$title = "";
+$date_label = "";
+
+switch ($type) {
+    case 'yearly':
+        $year = date('Y', $current_time);
+        $startdate = strtotime("$year-01-01");
+        $enddate = strtotime("$year-12-31");
+        $prior_start = strtotime(($year - 1) . "-01-01");
+        $prior_end = strtotime(($year - 1) . "-12-31");
+        $title = "$year Yearly Report";
+        $date_label = "Year of $year";
+        $prev_date = date('Y-m-d', strtotime("-1 year", $startdate));
+        $next_date = date('Y-m-d', strtotime("+1 year", $startdate));
+        break;
+
+    case 'monthly':
+        $month_start = date('Y-m-01', $current_time);
+        $startdate = strtotime($month_start);
+        $enddate = strtotime("last day of this month", $startdate);
+        $prior_start = strtotime("-1 month", $startdate);
+        $prior_end = strtotime("last day of this month", $prior_start);
+        $title = date('F Y', $startdate) . " Monthly Report";
+        $date_label = date('F Y', $startdate);
+        $prev_date = date('Y-m-d', $prior_start);
+        $next_date = date('Y-m-d', strtotime("+1 month", $startdate));
+        break;
+
+    case 'weekly':
+    default:
+        $type = 'weekly';
+        // Anchor to the Sunday of the week containing $current_time
+        $w = date('w', $current_time);
+        $anchor_sunday = $current_time - ($w * 86400);
+        $startdate = $anchor_sunday;
+        $enddate = $anchor_sunday + (6 * 86400);
+        
+        $prior_start = $startdate - (7 * 86400);
+        $prior_end = $enddate - (7 * 86400);
+        
+        $title = "Week " . date('W', $enddate) . " Report";
+        $date_label = date('M jS', $startdate) . " — " . date('M jS, Y', $enddate);
+        $prev_date = date('Y-m-d', $prior_start);
+        $next_date = date('Y-m-d', $enddate + 86400);
+        break;
+}
+
+$start_str = date("Y-m-d", $startdate);
+$end_str = date("Y-m-d", $enddate);
+$prior_start_str = date("Y-m-d", $prior_start);
+$prior_end_str = date("Y-m-d", $prior_end);
 
 $db = new SQLite3('./scripts/birds.db', SQLITE3_OPEN_READONLY);
 $db->busyTimeout(1000);
 
-// 1. Fetch species counts for the current week
+// 1. Fetch species counts for the current period
 $stmt1 = $db->prepare('SELECT Sci_Name, Com_Name, COUNT(*) as cnt FROM detections WHERE Date BETWEEN :start AND :end GROUP BY Sci_Name ORDER BY cnt DESC');
-$stmt1->bindValue(':start', date("Y-m-d", $startdate));
-$stmt1->bindValue(':end', date("Y-m-d", $enddate));
+$stmt1->bindValue(':start', $start_str);
+$stmt1->bindValue(':end', $end_str);
 ensure_db_ok($stmt1);
 $result1 = $stmt1->execute();
 
@@ -32,19 +101,17 @@ while ($row = $result1->fetchArray(SQLITE3_ASSOC)) {
     $com_name = $row['Com_Name'];
     $count = $row['cnt'];
 
-    // 2. Prior week comparison
-    $prior_start = date("Y-m-d", $startdate - (7 * 86400));
-    $prior_end = date("Y-m-d", $enddate - (7 * 86400));
+    // 2. Prior period comparison
     $stmt2 = $db->prepare('SELECT COUNT(*) as cnt FROM detections WHERE Sci_Name = :sci AND Date BETWEEN :pstart AND :pend');
     $stmt2->bindValue(':sci', $sci_name);
-    $stmt2->bindValue(':pstart', $prior_start);
-    $stmt2->bindValue(':pend', $prior_end);
+    $stmt2->bindValue(':pstart', $prior_start_str);
+    $stmt2->bindValue(':pend', $prior_end_str);
     $prior_count = $stmt2->execute()->fetchArray(SQLITE3_ASSOC)['cnt'];
 
-    // 3. Check if first seen (never seen before this week)
+    // 3. Check if first seen (never seen before this period)
     $stmt3 = $db->prepare('SELECT COUNT(*) as cnt FROM detections WHERE Sci_Name = :sci AND Date < :start');
     $stmt3->bindValue(':sci', $sci_name);
-    $stmt3->bindValue(':start', date("Y-m-d", $startdate));
+    $stmt3->bindValue(':start', $start_str);
     $ever_seen_before = $stmt3->execute()->fetchArray(SQLITE3_ASSOC)['cnt'];
 
     $detections[] = [
@@ -61,30 +128,31 @@ $total_detections = array_sum(array_column($detections, 'count'));
 $unique_species = count($detections);
 
 $stmt_p = $db->prepare('SELECT COUNT(*) as cnt FROM detections WHERE Date BETWEEN :pstart AND :pend');
-$stmt_p->bindValue(':pstart', date("Y-m-d", $startdate - (7 * 86400)));
-$stmt_p->bindValue(':pend', date("Y-m-d", $enddate - (7 * 86400)));
+$stmt_p->bindValue(':pstart', $prior_start_str);
+$stmt_p->bindValue(':pend', $prior_end_str);
 $prior_total = $stmt_p->execute()->fetchArray(SQLITE3_ASSOC)['cnt'];
 
 $stmt_ps = $db->prepare('SELECT COUNT(DISTINCT(Sci_Name)) as cnt FROM detections WHERE Date BETWEEN :pstart AND :pend');
-$stmt_ps->bindValue(':pstart', date("Y-m-d", $startdate - (7 * 86400)));
-$stmt_ps->bindValue(':pend', date("Y-m-d", $enddate - (7 * 86400)));
+$stmt_ps->bindValue(':pstart', $prior_start_str);
+$stmt_ps->bindValue(':pend', $prior_end_str);
 $prior_species = $stmt_ps->execute()->fetchArray(SQLITE3_ASSOC)['cnt'];
 
 // 4. Fetch additional KPIs
-$daily_avg = round($total_detections / 7);
+$days_in_period = max(1, round(($enddate - $startdate) / 86400) + 1);
+$daily_avg = round($total_detections / $days_in_period);
 
 // Busiest Day
 $stmt_bd = $db->prepare('SELECT Date, COUNT(*) as cnt FROM detections WHERE Date BETWEEN :start AND :end GROUP BY Date ORDER BY cnt DESC LIMIT 1');
-$stmt_bd->bindValue(':start', date("Y-m-d", $startdate));
-$stmt_bd->bindValue(':end', date("Y-m-d", $enddate));
+$stmt_bd->bindValue(':start', $start_str);
+$stmt_bd->bindValue(':end', $end_str);
 $bd_res = $stmt_bd->execute()->fetchArray(SQLITE3_ASSOC);
-$busiest_day_name = $bd_res ? date('l', strtotime($bd_res['Date'])) : 'N/A';
+$busiest_day_name = $bd_res ? date('M jS', strtotime($bd_res['Date'])) : 'N/A';
 $busiest_day_count = $bd_res ? $bd_res['cnt'] : 0;
 
 // Peak Hour
 $stmt_ph = $db->prepare('SELECT strftime("%H", Time) as hr, COUNT(*) as cnt FROM detections WHERE Date BETWEEN :start AND :end GROUP BY hr ORDER BY cnt DESC LIMIT 1');
-$stmt_ph->bindValue(':start', date("Y-m-d", $startdate));
-$stmt_ph->bindValue(':end', date("Y-m-d", $enddate));
+$stmt_ph->bindValue(':start', $start_str);
+$stmt_ph->bindValue(':end', $end_str);
 $ph_res = $stmt_ph->execute()->fetchArray(SQLITE3_ASSOC);
 $peak_time = $ph_res ? $ph_res['hr'] . ":00" : 'N/A';
 
@@ -97,9 +165,8 @@ function get_trend_html($current, $prior) {
 }
 
 if (isset($_GET['ascii'])) {
-    // Keep legacy ASCII support if needed, but simplified
-    echo "BirdNET-Pi Weekly Report (Week " . date('W', $enddate) . ")\n";
-    echo "Range: " . date('Y-m-d', $startdate) . " to " . date('Y-m-d', $enddate) . "\n\n";
+    echo "BirdNET-Pi Periodic Report - $title\n";
+    echo "Range: $start_str to $end_str\n\n";
     echo "Total Detections: $total_detections\n";
     echo "Unique Species: $unique_species\n\n";
     echo "Top 10 Species:\n";
@@ -126,6 +193,31 @@ if (isset($_GET['ascii'])) {
         border-radius: 20px;
         border: 1px solid var(--border);
         box-shadow: var(--shadow-md);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 10px;
+    }
+    .report-nav-row {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 30px;
+        width: 100%;
+        margin-top: 10px;
+    }
+    .nav-arrow {
+        font-size: 1.5em;
+        color: var(--accent);
+        text-decoration: none;
+        padding: 5px 15px;
+        border-radius: 10px;
+        background: var(--bg-table-row);
+        transition: all 0.2s;
+    }
+    .nav-arrow:hover {
+        background: var(--accent);
+        color: white;
     }
     .report-header h1 {
         margin: 0;
@@ -134,10 +226,30 @@ if (isset($_GET['ascii'])) {
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
     }
+    .period-tabs {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 15px;
+    }
+    .period-tab {
+        padding: 6px 16px;
+        border-radius: 20px;
+        background: var(--bg-table-row);
+        color: var(--text-secondary);
+        text-decoration: none;
+        font-size: 0.9em;
+        font-weight: 600;
+        transition: all 0.2s;
+        border: 1px solid var(--border);
+    }
+    .period-tab.active {
+        background: var(--accent);
+        color: white;
+        border-color: var(--accent);
+    }
     .report-date {
         color: var(--text-secondary);
         font-size: 1.1em;
-        margin-top: 10px;
     }
     .kpi-cards {
         display: flex;
@@ -169,21 +281,6 @@ if (isset($_GET['ascii'])) {
     .trend.up { background: #dcfce7; color: #166534; }
     .trend.down { background: #fee2e2; color: #991b1b; }
 
-    .hidden-item { display: none !important; }
-    .show-list-btn {
-        width: 100%;
-        padding: 12px;
-        background: var(--bg-card);
-        border: none;
-        border-top: 1px solid var(--border);
-        color: var(--accent);
-        font-weight: 600;
-        cursor: pointer;
-        transition: background 0.2s;
-        font-size: 0.9em;
-    }
-    .show-list-btn:hover { background: var(--bg-table-row); }
-
     .sections-grid {
         display: grid;
         grid-template-columns: 1fr 1fr;
@@ -193,13 +290,11 @@ if (isset($_GET['ascii'])) {
         background: var(--bg-card);
         border-radius: 16px;
         border: 1px solid var(--border);
-        /* overflow: hidden; removed to allow tooltips to show */
         box-shadow: var(--shadow-sm);
         position: relative;
         z-index: 1;
         overflow: visible !important;
     }
-    .report-section:hover { z-index: 500; }
     .section-title {
         background: var(--bg-table-row);
         padding: 15px 20px;
@@ -216,7 +311,6 @@ if (isset($_GET['ascii'])) {
         border-bottom: 1px solid var(--border-light);
     }
     .report-item:last-child { border-bottom: none; }
-    .report-item:hover { background: rgba(0,0,0,0.02); }
     .species-info { display: flex; flex-direction: column; }
     .species-name { font-weight: 600; font-size: 1.05em; }
     .species-sci { font-style: italic; font-size: 0.85em; color: var(--text-secondary); }
@@ -227,7 +321,7 @@ if (isset($_GET['ascii'])) {
         .sections-grid { grid-template-columns: 1fr; }
     }
 
-    /* Info Tooltip Styles - Synchronized with insights.php */
+    /* Info Tooltip Styles */
     .info-btn {
         display: inline-flex;
         align-items: center;
@@ -272,8 +366,6 @@ if (isset($_GET['ascii'])) {
         z-index: 9999;
         font-weight: 400;
         text-align: left;
-        text-transform: none;
-        letter-spacing: normal;
     }
     .info-tooltip::after {
         content: '';
@@ -292,17 +384,26 @@ if (isset($_GET['ascii'])) {
 </style>
 
 <div class="report-container">
-    <?php if (!isset($subview) || $subview != 'report'): ?>
     <header class="report-header">
-        <h1>Week <?php echo date('W', $enddate); ?> Report</h1>
-        <div class="report-date"><?php echo date('M jS', $startdate); ?> — <?php echo date('M jS, Y', $enddate); ?></div>
+        <div class="period-tabs">
+            <a href="?view=Insights&subview=report&type=weekly&date=<?php echo $start_str; ?>" class="period-tab <?php echo $type=='weekly'?'active':''; ?>">Weekly</a>
+            <a href="?view=Insights&subview=report&type=monthly&date=<?php echo $start_str; ?>" class="period-tab <?php echo $type=='monthly'?'active':''; ?>">Monthly</a>
+            <a href="?view=Insights&subview=report&type=yearly&date=<?php echo $start_str; ?>" class="period-tab <?php echo $type=='yearly'?'active':''; ?>">Yearly</a>
+        </div>
+        
+        <div class="report-nav-row">
+            <a href="?view=Insights&subview=report&type=<?php echo $type; ?>&date=<?php echo $prev_date; ?>" class="nav-arrow" title="Previous Period">❮</a>
+            <h1><?php echo $title; ?></h1>
+            <a href="?view=Insights&subview=report&type=<?php echo $type; ?>&date=<?php echo $next_date; ?>" class="nav-arrow" title="Next Period">❯</a>
+        </div>
+        
+        <div class="report-date"><?php echo $date_label; ?></div>
     </header>
-    <?php endif; ?>
 
     <div class="kpi-cards">
         <div class="kpi-card">
             <span class="kpi-val"><?php echo number_format($total_detections); ?></span>
-            <span class="kpi-label">Total Detections <?php echo get_trend_html($total_detections, $prior_total); ?> <span class="info-btn">ⓘ<span class="info-tooltip">Total number of bird sounds identified during the full week (Sunday to Saturday).</span></span></span>
+            <span class="kpi-label">Total Detections <?php echo get_trend_html($total_detections, $prior_total); ?> <span class="info-btn">ⓘ<span class="info-tooltip">Total number of bird sounds identified during this <?php echo $type; ?> period.</span></span></span>
         </div>
         <div class="kpi-card">
             <span class="kpi-val"><?php echo number_format($daily_avg); ?></span>
@@ -310,7 +411,7 @@ if (isset($_GET['ascii'])) {
         </div>
         <div class="kpi-card">
             <span class="kpi-val"><?php echo number_format($unique_species); ?></span>
-            <span class="kpi-label">Unique Species <?php echo get_trend_html($unique_species, $prior_species); ?> <span class="info-btn">ⓘ<span class="info-tooltip">Number of different bird species identified this week.</span></span></span>
+            <span class="kpi-label">Unique Species <?php echo get_trend_html($unique_species, $prior_species); ?> <span class="info-btn">ⓘ<span class="info-tooltip">Number of different bird species identified in this period.</span></span></span>
         </div>
         <div class="kpi-card">
             <span class="kpi-val"><?php echo $busiest_day_name; ?></span>
@@ -324,13 +425,13 @@ if (isset($_GET['ascii'])) {
 
     <div class="sections-grid">
         <section class="report-section">
-            <div class="section-title">🏆 Top Species <span class="info-btn">ⓘ<span class="info-tooltip">The most frequently detected species of the week, ranked by total count.</span></span></div>
+            <div class="section-title">🏆 Top Species <span class="info-btn">ⓘ<span class="info-tooltip">The most frequently detected species of the period, ranked by total count.</span></span></div>
             <ul class="report-list">
                 <?php
                 $rank = 1;
                 foreach ($detections as $d) {
                     $hidden_class = ($rank > 10) ? 'hidden-item' : '';
-                    echo '<li class="report-item ' . $hidden_class . '">';
+                    echo '<li class="report-item ' . $hidden_class . '" style="display:' . ($rank > 10 ? 'none' : 'flex') . '">';
                     echo '  <div class="species-info">';
                     echo '    <span class="species-name">' . $d['name'] . '</span>';
                     echo '    <span class="species-sci">' . $d['sci'] . '</span>';
@@ -345,9 +446,7 @@ if (isset($_GET['ascii'])) {
                 ?>
             </ul>
             <?php if (count($detections) > 10): ?>
-            <button class="show-list-btn" 
-                    onclick="toggleItems(this)" 
-                    data-expanded="false" 
+            <button class="show-list-btn" onclick="toggleItems(this)" data-expanded="false" 
                     data-show-text="Show all <?php echo count($detections); ?> species ↓" 
                     data-hide-text="Show top 10 species ↑">
                 Show all <?php echo count($detections); ?> species ↓
@@ -356,7 +455,7 @@ if (isset($_GET['ascii'])) {
         </section>
 
         <section class="report-section">
-            <div class="section-title">✨ First Time Seen This Week <span class="info-btn">ⓘ<span class="info-tooltip">Species that were detected this week but have NO record in the system before this week started. Great for tracking new arrivals!</span></span></div>
+            <div class="section-title">✨ First Time Seen <span class="info-btn">ⓘ<span class="info-tooltip">Species that were detected this period but have NO record in the system before this period started.</span></span></div>
             <ul class="report-list">
                 <?php
                 $new_count = 0;
@@ -365,7 +464,7 @@ if (isset($_GET['ascii'])) {
                     if ($d['is_first_seen']) {
                         $new_count++;
                         $hidden_class = ($new_rank > 10) ? 'hidden-item' : '';
-                        echo '<li class="report-item ' . $hidden_class . '">';
+                        echo '<li class="report-item ' . $hidden_class . '" style="display:' . ($new_rank > 10 ? 'none' : 'flex') . '">';
                         echo '  <div class="species-info">';
                         echo '    <span class="species-name">' . $d['name'] . '</span>';
                         echo '    <span class="species-sci">' . $d['sci'] . '</span>';
@@ -378,14 +477,12 @@ if (isset($_GET['ascii'])) {
                     }
                 }
                 if ($new_count == 0) {
-                    echo '<li class="report-item" style="justify-content:center; color:var(--text-muted); padding:40px;">No new species detected this week.</li>';
+                    echo '<li class="report-item" style="justify-content:center; color:var(--text-muted); padding:40px;">No new species detected this period.</li>';
                 }
                 ?>
             </ul>
             <?php if ($new_count > 10): ?>
-            <button class="show-list-btn" 
-                    onclick="toggleItems(this)" 
-                    data-expanded="false" 
+            <button class="show-list-btn" onclick="toggleItems(this)" data-expanded="false" 
                     data-show-text="Show all <?php echo $new_count; ?> new species ↓" 
                     data-hide-text="Show top 10 new species ↑">
                 Show all <?php echo $new_count; ?> new species ↓
@@ -395,31 +492,24 @@ if (isset($_GET['ascii'])) {
     </div>
 
     <footer style="margin-top: 40px; text-align: center; color: var(--text-muted); font-size: 0.9em;">
-        * Trends are calculated relative to week <?php echo date('W', $enddate) - 1; ?><br>
-        * Data range: <?php echo date('Y-m-d', $startdate); ?> to <?php echo date('Y-m-d', $enddate); ?>
+        * Trends are calculated relative to the previous <?php echo $type; ?> period.<br>
+        * Data range: <?php echo $start_str; ?> to <?php echo $end_str; ?>
     </footer>
 </div>
 
 <script>
 function toggleItems(btn) {
-    const section = btn.parentElement;
-    const items = section.querySelectorAll('.hidden-item');
+    const list = btn.previousElementSibling;
+    const items = list.querySelectorAll('.report-item');
     const isExpanded = btn.getAttribute('data-expanded') === 'true';
     
-    if (isExpanded) {
-        // Collapse
-        items.forEach(item => {
-            item.style.display = 'none';
-        });
-        btn.innerHTML = btn.getAttribute('data-show-text');
-        btn.setAttribute('data-expanded', 'false');
-    } else {
-        // Expand
-        items.forEach(item => {
-            item.style.display = 'flex';
-        });
-        btn.innerHTML = btn.getAttribute('data-hide-text');
-        btn.setAttribute('data-expanded', 'true');
-    }
+    items.forEach((item, index) => {
+        if (index >= 10) {
+            item.style.display = isExpanded ? 'none' : 'flex';
+        }
+    });
+    
+    btn.innerHTML = isExpanded ? btn.getAttribute('data-show-text') : btn.getAttribute('data-hide-text');
+    btn.setAttribute('data-expanded', !isExpanded);
 }
 </script>

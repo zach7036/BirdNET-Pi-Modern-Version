@@ -1421,7 +1421,7 @@ $db->close();
     <?php endif; ?>
     
     <?php if ($subview == 'report'): ?>
-        <?php include 'weekly_report.php'; ?>
+        <?php include 'scripts/reports.php'; ?>
     <?php endif; ?>
 </div>
 
