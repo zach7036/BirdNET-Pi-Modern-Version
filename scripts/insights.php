@@ -634,7 +634,7 @@ $db->close();
             <h1>Insights: <?php 
                 if ($subview == 'dashboard') echo 'Dashboard';
                 elseif ($subview == 'environmental') echo 'Weather Impacts';
-                elseif ($subview == 'report') echo 'Weekly Report';
+                elseif ($subview == 'report') echo 'Reports';
                 elseif ($subview == 'forecasting') echo 'Trends & Forecasting';
                 else echo ucfirst($subview); 
             ?></h1>
@@ -646,7 +646,7 @@ $db->close();
                     case 'environmental': echo 'Correlations between weather and bird activity.'; break;
                     case 'health': echo 'Data quality and system health.'; break;
                     case 'forecasting': echo 'Long-term biodiversity trends and historical predictions.'; break;
-                    case 'report': echo 'Comprehensive summary of last week\'s activity.'; break;
+                    case 'report': echo 'Comprehensive summaries across weekly, monthly, and yearly periods.'; break;
                     default: echo 'Deep behavioral analysis and seasonal trends for your station.'; break;
                 }
                 ?>
