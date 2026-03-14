@@ -386,9 +386,9 @@ if (isset($_GET['ascii'])) {
 <div class="report-container">
     <header class="report-header">
         <div class="period-tabs">
-            <a href="?view=Insights&subview=report&type=weekly&date=<?php echo $start_str; ?>" class="period-tab <?php echo $type=='weekly'?'active':''; ?>">Weekly</a>
-            <a href="?view=Insights&subview=report&type=monthly&date=<?php echo $start_str; ?>" class="period-tab <?php echo $type=='monthly'?'active':''; ?>">Monthly</a>
-            <a href="?view=Insights&subview=report&type=yearly&date=<?php echo $start_str; ?>" class="period-tab <?php echo $type=='yearly'?'active':''; ?>">Yearly</a>
+            <a href="?view=Insights&subview=report&type=weekly" class="period-tab <?php echo $type=='weekly'?'active':''; ?>">Weekly</a>
+            <a href="?view=Insights&subview=report&type=monthly" class="period-tab <?php echo $type=='monthly'?'active':''; ?>">Monthly</a>
+            <a href="?view=Insights&subview=report&type=yearly" class="period-tab <?php echo $type=='yearly'?'active':''; ?>">Yearly</a>
         </div>
         
         <div class="report-nav-row">
